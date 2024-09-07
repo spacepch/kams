@@ -19,4 +19,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+.pps-form{
+  width: 100%;
+}
+</style>

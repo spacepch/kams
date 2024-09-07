@@ -68,6 +68,7 @@ export default {
         },
         { icon: 'el-icon-set-up', content: '指令管理', indexPath: '/command' },
         { icon: 'el-icon-setting', content: '配置查看', indexPath: '/config' },
+        { icon: 'el-icon-chat-line-square', content: '沙盒测试', indexPath: '/sandBox' },
         { icon: 'el-icon-cpu', content: '控制台', indexPath: '/console' }
       ]
     };

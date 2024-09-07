@@ -17,10 +17,12 @@
         &nbsp;
         <span>CPU:{{ fixedFn(roundedCpu.rate) }} %</span>
       </div>
-      <template v-slot:item="{ scope }">
-        <div class="rate">
-          <span>{{ scope.label }}</span>
-          <el-progress :percentage="Number(scope.rate)"></el-progress>
+      <template v-slot:item="{ menu }">
+        <div class="menu-item" v-for="(item, index) in menu" :key="index">
+          <div class="rate">
+            <span>{{ item.label }}</span>
+            <el-progress :percentage="Number(item.rate)"></el-progress>
+          </div>
         </div>
       </template>
     </pps-context-menu>
@@ -89,7 +91,15 @@ export default {
     }
   }
 
-  .rate {
+  .menu-item {
+    padding: 5px 10px;
+    cursor: pointer;
+    &:hover {
+      background: #f5f5f5;
+    }
+  }
+
+  & ::v-deep .rate {
     display: inline-flex;
     justify-content: space-between;
     align-items: center;
@@ -102,7 +112,7 @@ export default {
     }
   }
 
-  .pps-context-menu-wrapper {
+  .pps-context-menu-area {
     height: 100%;
   }
 }

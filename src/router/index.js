@@ -61,6 +61,11 @@ const routes = [
         component: () => import('@/views/config')
       },
       {
+        path: 'sandBox',
+        meta: { title: '沙盒测试' },
+        component: () => import('@/views/sandBox')
+      },
+      {
         path: 'console',
         meta: { title: '控制台' },
         component: () => import('@/views/console')

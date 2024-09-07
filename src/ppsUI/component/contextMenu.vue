@@ -1,22 +1,32 @@
 <template>
-  <div ref="container" class="pps-context-menu-wrapper">
+  <div ref="container" class="pps-context-menu-area">
     <slot name="content"></slot>
     <transition name="appear">
-      <ul
+      <div
         ref="menu"
-        class="pps-context-menu"
         v-show="showContextMenu"
+        class="pps-context-menu_wrapper"
         :style="{ left: x + 'px', top: y + 'px' }"
       >
-        <li
-          class="pps-context-menu-item"
-          v-for="(item, index) in menus"
-          :key="index"
-          @click="handleSelect(item)"
-        >
-          <slot name="item" :scope="item">{{ item.label }}</slot>
-        </li>
-      </ul>
+        <div class="pps-context-menu_prepend" v-if="$slots.prepend">
+          <slot name="prepend"></slot>
+        </div>
+        <ul class="pps-context-menu_inner">
+          <slot name="item" :menu="menus">
+            <li
+              class="pps-context-menu-item"
+              v-for="(item, index) in menus"
+              :key="index"
+              @click="handleSelect(item)"
+            >
+              {{ item.label }}
+            </li>
+          </slot>
+        </ul>
+        <div class="pps-context-menu_append" v-if="$slots.append">
+          <slot name="append"></slot>
+        </div>
+      </div>
     </transition>
   </div>
 </template>
@@ -46,12 +56,6 @@ export default {
         return [];
       }
     },
-    position: {
-      type: String,
-      default() {
-        return 'right';
-      }
-    },
     trigger: {
       type: String,
       default() {
@@ -61,7 +65,7 @@ export default {
   },
   data() {
     return {
-      showContextMenu: false,
+      showContextMenu: true,
       x: 0,
       y: 0,
       isBottom: false,
@@ -117,18 +121,46 @@ export default {
 };
 </script>
 
-<style lang="less">
-.pps-context-menu-wrapper {
+<style lang="less" scoped>
+.pps-context-menu-area {
   position: relative;
+  --radius: 5px;
 }
-.pps-context-menu {
+.pps-context-menu_wrapper {
   position: fixed;
-  padding: 5px;
+  min-width: 100px;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.145);
   background: #ffffff;
-  border-radius: 5px;
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.232);
+  padding: 10px;
   z-index: 100;
-  transition: 0.3s ease;
+  color: initial;
+}
+.pps-context-menu_prepend {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  background: #fff;
+  min-height: 20px;
+  border-bottom: 1px solid #0505050f;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+}
+.pps-context-menu_append {
+  display: flex;
+  align-items: center;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  background: #fff;
+  min-height: 20px;
+  border-top: 1px solid #0505050f;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.pps-context-menu_inner {
+  // transition: 0.3s ease;
 }
 .pps-context-menu-item {
   padding: 5px 10px;

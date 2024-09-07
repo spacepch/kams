@@ -4,7 +4,7 @@ import webSocketOption from './webSocket';
 import layoutOption from './layout';
 import modulesDetail from './modulesDetail';
 import command from './command';
-// import sandBox from './sandBox';
+import sandBox from './sandBox';
 import createPersistedState from 'vuex-persistedstate';
 
 Vue.use(Vuex);
@@ -14,7 +14,8 @@ export default new Vuex.Store({
     webSocketOption,
     layoutOption,
     modulesDetail,
-    command
+    command,
+    sandBox
   },
   plugins: [createPersistedState()]
 });

@@ -28,7 +28,7 @@
       </template>
       <template v-if="activeShape.includes('circle')">
         <transition appear>
-          <div v-show="active" class="current-shape circle" :style="[circleStyle]"></div>
+          <div v-show="active" class="current-shape circle" :style="circleStyle"></div>
         </transition>
       </template>
       <slot></slot>
@@ -116,8 +116,8 @@ export default {
     },
     circleStyle() {
       return {
-        border: `3px solid ${this.activeColor};`,
-        filter: `drop-shadow(0 0 4px ${this.activeColor});`
+        border: `3px solid ${this.root.activeColor}`,
+        filter: `drop-shadow(0 0 4px ${this.root.activeColor})`
       };
     },
     activeShape() {
@@ -145,7 +145,7 @@ export default {
   justify-content: center;
   width: 100%;
   max-width: 500px;
-  text-align: center;
+  // text-align: center;
   list-style-type: none;
   border-radius: 5px;
   cursor: pointer;
@@ -168,7 +168,7 @@ export default {
     z-index: 1;
   }
 }
-.k-menu-item-horizontal + .k-menu-item-row {
+.k-menu-item-row + .k-menu-item-row {
   margin-inline-start: 10px;
 }
 

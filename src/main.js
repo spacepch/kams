@@ -2,7 +2,7 @@ import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
 import store from './store';
-import ppsUI from './ppsUI/packages';
+import { install } from './ppsUI/packages';
 import * as echarts from 'echarts';
 import I18n from '@kotori-bot/i18n';
 import '@/elementUI/index.js';
@@ -24,7 +24,7 @@ Vue.config.productionTip = false;
 configureAxiosInstance(store);
 
 Vue.use(webSocketPlugin);
-Vue.use(ppsUI);
+Vue.use(install);
 Vue.directive('resize-ob', resize);
 Vue.directive('trans-time', transTime);
 

@@ -37,7 +37,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="less">
 /*================ pps-button ================*/
 .pps-button + .pps-button {
   margin-left: 10px;
@@ -63,13 +63,13 @@ export default {
 .pps-button-default {
   background-color: #fff;
   border: 1px solid #c3c5c7;
-}
-.pps-button-default:hover {
-  color: #32bcf2;
-  border: 1px solid #32bcf2;
-}
-.pps-button-default:active {
-  box-shadow: inset 3px 3px 5px 0px #c3c5c7;
+  &:hover {
+    color: #32bcf2;
+    border: 1px solid #32bcf2;
+  }
+  &:active {
+    box-shadow: inset 3px 3px 5px 0px #c3c5c7;
+  }
 }
 /*================ end ================*/
 
@@ -78,12 +78,12 @@ export default {
   color: #fff;
   background: #e6a23c;
   box-shadow: inset 0px 0px 1px 1px #cb9e0a;
-}
-.pps-button-primary:hover {
-  background: #ffc312;
-}
-.pps-button-primary:active {
-  box-shadow: inset 3px 3px 3px 2px #cb9e0a;
+  &:hover {
+    background: #ffc312;
+  }
+  &:active {
+    box-shadow: inset 3px 3px 3px 2px #cb9e0a;
+  }
 }
 /*================= end ===================*/
 
@@ -92,12 +92,22 @@ export default {
   color: #fff;
   background-color: #00aeed;
   box-shadow: inset 0px 0px 1px 1px #3298f2;
-}
-.pps-button-confirm:active {
-  box-shadow: inset 3px 3px 3px 2px #32b0e1;
-}
-.pps-button-confirm:hover {
-  background-color: #40c5f1;
+  &:active {
+    box-shadow: inset 3px 3px 3px 2px #32b0e1;
+  }
+  &:hover {
+    background-color: #40c5f1;
+  }
+  &[disabled] {
+    &,
+    &:hover,
+    &:active {
+      background-color: #e6e6e6;
+      box-shadow: initial;
+      cursor: not-allowed;
+      background: #00aeed;
+    }
+  }
 }
 /*================ end ================*/
 
@@ -106,12 +116,22 @@ export default {
   color: #fff;
   background-color: rgb(252, 40, 40);
   box-shadow: inset -0px 0px 1px 1px rgb(148, 5, 5);
-}
-.pps-button-warn:hover {
-  background-color: rgb(251, 88, 88);
-}
-.pps-button-warn:active {
-  box-shadow: inset 3px 3px 3px 2px rgb(198, 6, 6);
+  &:hover {
+    background-color: rgb(251, 88, 88);
+  }
+  &:active {
+    box-shadow: inset 3px 3px 3px 2px rgb(198, 6, 6);
+  }
+  &[disabled] {
+    &,
+    &:hover,
+    &:active {
+      background-color: #e6e6e6;
+      box-shadow: initial;
+      cursor: not-allowed;
+      background: rgb(252, 40, 40);
+    }
+  }
 }
 /*=============== end =================*/
 
@@ -122,12 +142,12 @@ export default {
   color: #00aeed;
   background-color: transparent;
   box-shadow: initial;
-}
-.pps-button-text:hover {
-  color: #40c5f1;
-}
-.pps-button-text:active {
-  color: #3298f2;
+  &:hover {
+    color: #40c5f1;
+  }
+  &:active {
+    color: #3298f2;
+  }
 }
 /*================= end =================*/
 </style>

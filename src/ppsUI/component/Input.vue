@@ -1,6 +1,6 @@
 <template>
   <div class="pps-input-wrapper">
-    <div v-if="label" class="pps-input-label">{{ label }}:</div>
+    <label v-if="label" :for="label" class="pps-input-label">{{ label }}:</label>
     <div class="pps-input__prepend" v-if="$slots.prepend">
       <slot name="prepend"></slot>
     </div>
@@ -17,6 +17,7 @@
 
       <input
         ref="input"
+        :id="label"
         v-bind="$attrs"
         v-on="$listeners"
         :type="type"
@@ -30,8 +31,7 @@
         <i class="icon-clear"></i>
       </span>
 
-      <div class="space"></div>
-      <div class="operation">
+      <div class="operation" v-if="$slots.default">
         <slot></slot>
       </div>
     </div>
@@ -139,7 +139,8 @@ export default {
       const component = await import(`./icon/${componentName}.vue`);
       this.dynamicComponent = component.default;
     }
-  }
+  },
+  mounted() {}
 };
 </script>
 
@@ -174,8 +175,7 @@ export default {
   }
 }
 .pps-input-suffix {
-  position: absolute;
-  right: 5px;
+  padding-inline-end: 5px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -200,10 +200,9 @@ export default {
 /*=============== input默认样式设置 ===============*/
 .pps-input {
   outline: none;
-  width: 90%;
+  width: 100%;
   height: 28px;
-  margin-left: 5px;
-  padding-right: 14px;
+  flex-grow: 1;
   background: none;
   border: none;
   font-size: 15px;
@@ -249,8 +248,10 @@ svg {
 
   .pps-input-label {
     margin-right: 15px;
+    cursor: pointer;
   }
   .space {
+    height: 0;
     width: 0;
     flex: 1;
   }
@@ -259,7 +260,7 @@ svg {
     padding-inline-end: 5px;
   }
   .pps-input {
-    padding-inline-start: 5px;
+    padding-inline: 5px;
   }
 
   & + & {
@@ -268,9 +269,10 @@ svg {
 }
 .pps-input-inner {
   position: relative;
-  width: 100%;
+  flex-grow: 1;
   display: flex;
   flex-direction: row;
+  justify-content: space-around;
   align-items: center;
   height: 100%;
   border-radius: var(--radius);
@@ -295,13 +297,6 @@ svg {
   transition: 0.2s cubic-bezier(0.65, 0.05, 0.36, 1);
 }
 .white .pps-input {
-  outline: none;
-  width: 90%;
-  height: 28px;
-  margin-left: 5px;
-  background: none;
-  border: none;
-  font-size: 15px;
   color: #2e2e2e;
 }
 .white:focus-within {
@@ -311,9 +306,6 @@ svg {
 .white:hover {
   border-color: #409eff;
   transition: all 50ms linear 50ms;
-}
-.white .pps-input:hover {
-  filter: brightness(70%);
 }
 .pps-input-error::placeholder {
   color: red;

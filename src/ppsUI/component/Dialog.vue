@@ -4,7 +4,7 @@
       <div class="pps-dialog-window">
         <header>
           <slot name="title">{{ title }}</slot>
-          <pps-icon icon="pps-icon-close" @click="closeMessageFn()"></pps-icon>
+          <pps-icon icon="pps-icon-close" @click="handleAction('close')"></pps-icon>
         </header>
         <div class="pps-dialog-content">
           <slot name="content">
@@ -13,8 +13,8 @@
         </div>
         <footer>
           <slot name="footer">
-            <pps-button @click="cancelFn()">取消</pps-button>
-            <pps-button theme="confirm" @click="confirmFn()">确认</pps-button>
+            <pps-button @click="handleAction('cancel')">取消</pps-button>
+            <pps-button theme="confirm" @click="handleAction('confirm')">确认</pps-button>
           </slot>
         </footer>
       </div>
@@ -52,13 +52,20 @@ export default {
       default() {
         return false;
       }
+    },
+    callback: {
+      type: Function,
+      default() {
+        return false;
+      }
     }
   },
   data() {
     return {
       dialogFlag: false,
       isShowing: false,
-      isClosing: false
+      isClosing: false,
+      action: ''
     };
   },
   methods: {
@@ -76,6 +83,14 @@ export default {
         resolve();
       });
     },
+    handleAction(action) {
+      this.action = action;
+      this.closeMessageFn();
+      if (this.show) {
+        this.action === 'confirm' && this.$emit('confirmed');
+        ['cancel', 'close'].includes(this.action) && this.$emit('canceled');
+      }
+    },
     showMessageFn() {
       this.dialogFlag = true;
       this.$nextTick(() => {
@@ -86,12 +101,13 @@ export default {
       });
     },
     closeMessageFn() {
-      if (this.isClosing) return; // 防抖
+      if (this.isClosing) return; // 节流
       this.isClosing = true;
       this.dialogFlag = false;
       setTimeout(() => {
         this.isClosing = false;
         try {
+          if (this.action) this.callback(this.action);
           this.$refs.dialog.close();
         } catch (error) {}
       }, 300);
@@ -152,6 +168,7 @@ dialog {
     .pps-dialog-content {
       margin-top: 20px;
       max-height: 70vh;
+      // width: 100%;
       height: 100%;
       overflow-x: auto;
 

@@ -45,7 +45,8 @@
           </pps-form>
         </div>
       </header>
-      <div>
+
+      <template #inner>
         <k-menu
           :default-active="getCurrent.name"
           active-color="#752bec"
@@ -61,12 +62,11 @@
             @click="selectCmdFn(menu)"
             width="200"
             height="40"
-            className
           >
             <p>{{ menu.name }}</p>
           </k-menu-item>
         </k-menu>
-      </div>
+      </template>
 
       <div class="fill-empty"></div>
     </k-aside>
@@ -295,17 +295,6 @@ export default {
         this.isShowMain = true;
       }
       this.isSmall = true;
-      // if (width <= 600) {
-      //   if (!this.isSmall) {
-      //     this.isShowAside = false;
-      //     this.isShowMain = true;
-      //   }
-      //   this.isSmall = true;
-      // } else {
-      //   this.isShowAside = true;
-      //   this.isShowMain = true;
-      //   this.isSmall = false;
-      // }
     },
     triggerPageFn() {
       this.isShowAside = !this.isShowAside;
@@ -347,7 +336,7 @@ export default {
   },
   created() {
     this.menus = this.getCmds;
-    this.updateCurrentFn()
+    this.updateCurrentFn();
   },
   mounted() {}
 };
@@ -393,14 +382,6 @@ export default {
       box-sizing: border-box;
       font-size: 14px;
       margin-block-end: -6px;
-    }
-    &::-webkit-scrollbar {
-      width: 3px; // 设置滚动条的宽度
-    }
-    &::-webkit-scrollbar-button:start {
-      height: 28px;
-      width: 10px;
-      background: transparent;
     }
     @media screen and (max-width: 700px) {
       width: 100%;

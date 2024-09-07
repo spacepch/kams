@@ -103,9 +103,11 @@ export default {
         this.$message.error('连接正在关闭，请重新连接');
       } else if (this.$ws.instance.readyState === 3) {
         this.$message.error('重新连接中...');
-        this.$ws.init();
+        this.$ws.init(this.sendFn(wsMsg));
+      } else {
+        this.sendFn(wsMsg);
       }
-      this.sendFn(wsMsg);
+
       this.inputData = '';
     },
     pushMsg(options) {
