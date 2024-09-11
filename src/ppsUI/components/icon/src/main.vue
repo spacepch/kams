@@ -3,22 +3,22 @@
 </template>
 
 <script>
-import ppsAdmin from './icon/admin';
-import ppsClose from './icon/close';
-import ppsLock from './icon/lock';
-import ppsOffline from './icon/offline';
-import ppsOnline from './icon/online';
-import ppsSearch from './icon/search';
-import ppsGithub from './icon/github';
-import ppsHelp from './icon/help';
-import ppsQq from './icon/qq';
-import ppsSideHide from './icon/side-hide';
-import ppsSideShow from './icon/side-show';
-import ppsHost from './icon/host';
-import ppsPort from './icon/port';
-import ppsAccount from './icon/account';
-import ppsContact from './icon/contact';
-import ppsGroup from './icon/group';
+import ppsAdmin from '../icons/admin';
+import ppsClose from '../icons/close';
+import ppsLock from '../icons/lock';
+import ppsOffline from '../icons/offline';
+import ppsOnline from '../icons/online';
+import ppsSearch from '../icons/search';
+import ppsGithub from '../icons/github';
+import ppsHelp from '../icons/help';
+import ppsQq from '../icons/qq';
+import ppsSideHide from '../icons/side-hide';
+import ppsSideShow from '../icons/side-show';
+import ppsHost from '../icons/host';
+import ppsPort from '../icons/port';
+import ppsAccount from '../icons/account';
+import ppsContact from '../icons/contact';
+import ppsGroup from '../icons/group';
 
 export default {
   name: 'ppsIcon',

@@ -1,5 +1,5 @@
 <template>
-  <transition name="pps-animation">
+  <transition name="pps-dialog">
     <dialog ref="dialog" v-if="dialogFlag">
       <div class="pps-dialog-window">
         <header>
@@ -132,7 +132,7 @@ export default {
 };
 </script>
 
-<style lang="less">
+<style lang="scss">
 dialog {
   position: absolute;
   min-width: 360px;
@@ -205,13 +205,13 @@ dialog {
   }
 }
 /* 进入的起点、离开的终点 */
-.pps-animation-enter,
-.pps-animation-leave-to {
+.pps-dialog-enter,
+.pps-dialog-leave-to {
   transform: translateY(-10%);
 }
 /* 进入的终点、离开的起点 */
-.pps-animation-enter-to,
-.pps-animation-leave {
+.pps-dialog-enter-to,
+.pps-dialog-leave {
   transform: translateY(0);
 }
 </style>

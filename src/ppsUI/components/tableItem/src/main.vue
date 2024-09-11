@@ -65,7 +65,7 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .isChecked {
   filter: brightness(95%);
 }

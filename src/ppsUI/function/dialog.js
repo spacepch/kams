@@ -1,6 +1,6 @@
 // DialogManager.js
 import Vue from 'vue';
-import DialogComponent from './../Dialog.vue';
+import DialogComponent from '../components/dialog/src/main';
 
 let instance, currentMsg;
 // eslint-disable-next-line prefer-const
@@ -70,29 +70,3 @@ const Dialog = function (options, callback) {
 
 export default Dialog;
 export { Dialog };
-
-// export default {
-//   install() {
-//     Vue.prototype.$dialog = DialogManager;
-//   }
-// };
-
-// MyComponent.vue
-// import DialogManager from './DialogManager';
-
-// Vue.use(DialogManager);
-
-// export default {
-//   // ...
-//   methods: {
-//     async quitFn () {
-//       const result = await this.$dialog.show({
-//         title: '提示',
-//         message: '确认退出登录？'
-//       })
-//       if (result === 'confirm') {
-//         this.$router.push('/login')
-//       }
-//     }
-//   }
-// }

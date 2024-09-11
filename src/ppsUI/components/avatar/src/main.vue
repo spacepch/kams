@@ -1,0 +1,49 @@
+<template>
+  <div class="pps-avatar">
+    <a v-if="href" class="pps-avatar-link" :href="href" title="" :target="href ? '_blank' : ''">
+      <img :src="src" alt="" class="pps-avatar-img" :width="`${size}px`" />
+    </a>
+    <img v-else :src="src" alt="" class="pps-avatar-img" :width="`${size}px`" />
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'ppsAvatar',
+  props: {
+    src: {
+      type: String,
+      default() {
+        return 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png';
+      }
+    },
+    href: {
+      type: String,
+      default() {
+        return '';
+      }
+    },
+    size: {
+      type: [Number, String],
+      default() {
+        return 100;
+      }
+    }
+  }
+};
+</script>
+
+<style lang="less">
+.pps-avatar {
+  width: fit-content;
+  height: fit-content;
+
+  .pps-avatar-img {
+    border-radius: 50%;
+
+    &:hover {
+      filter: brightness(75%);
+    }
+  }
+}
+</style>

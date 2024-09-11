@@ -58,7 +58,8 @@
                 </div>
               </template>
               <div class="user-avatar" slot="content">
-                <img class="user-avatar-img" :src="user.avatar" alt="" />
+                <!-- <img class="user-avatar-img" alt="" /> -->
+                <pps-avatar :src="user.avatar" size="40"></pps-avatar>
               </div>
             </pps-context-menu>
           </k-menu-item>
@@ -113,7 +114,8 @@
             height="60"
           >
             <div class="list-item">
-              <img class="avatar" :src="item.avatar" alt="" />
+              <img class="avatar" alt="" />
+              <pps-avatar :src="item.avatar" size="40" ></pps-avatar>
               <div class="name">{{ item.name }}</div>
               <span class="closeBtn" @click="deleteFriendMsgFn(item)">
                 <i class="el-icon-circle-close"></i>
@@ -154,13 +156,6 @@
         </pps-form>
       </template>
     </pps-dialog>
-
-    <!-- 默认 对话框 -->
-    <pps-dialog
-      :show.sync="show.default.show"
-      title="提示"
-      :content="show.default.content"
-    ></pps-dialog>
 
     <!-- 移除用户 对话框 -->
     <pps-dialog
@@ -249,7 +244,7 @@
         <el-table :show-header="true" :data="getCurrentUser.friends">
           <el-table-column align="center" label="头像">
             <template slot-scope="scope">
-              <img :src="scope.row.avatar" alt="" width="40px" />
+              <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
             </template>
           </el-table-column>
           <el-table-column align="center" prop="id" label="id"></el-table-column>
@@ -264,7 +259,7 @@
         <el-table :data="getCurrentUser.groups">
           <el-table-column align="center" label="群聊头像">
             <template slot-scope="scope">
-              <img :src="scope.row.avatar" alt="" width="40px" />
+              <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
             </template>
           </el-table-column>
           <el-table-column align="center" prop="id" label="群聊id"></el-table-column>
@@ -273,7 +268,7 @@
             <template slot-scope="scope">
               <pps-button
                 :disabled="scope.row.role !== 'lord'"
-                theme="warn"
+                theme="danger"
                 @click="removeGroupFn(scope.row)"
               >
                 解散
@@ -288,7 +283,7 @@
     <pps-dialog :show.sync="show.userInfo" title="用户信息">
       <template v-slot:content>
         <div class="user-info-wrapper">
-          <img class="avatar" :src="getCurrentUser.avatar" alt="" width="40px" />
+          <pps-avatar :src="getCurrentUser.avatar" size="40"></pps-avatar>
         </div>
         <el-descriptions class="margin-top" :column="2" border>
           <el-descriptions-item>
@@ -325,7 +320,7 @@ import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import ADD_USER_IMG from '@/assets/addAvatar.svg';
 import REMOVE_USER from '@/assets/removeAvatar.svg';
-import { Dialog } from '@/ppsUI/packages';
+// import { Dialog } from '@/ppsUI/packages';
 
 export default {
   name: 'sb-left-aside',
@@ -343,10 +338,6 @@ export default {
         createGroup: false,
         removeUser: false,
         addFriend: false,
-        default: {
-          show: false,
-          content: ''
-        },
         friendList: false,
         groupList: false,
         userInfo: false
@@ -387,10 +378,9 @@ export default {
       const adder = this.createUser;
       const hasData = adder.id && adder.name && adder.age && adder.sex;
       if (!hasData) {
-        // this.show.default.content = '请填写完整信息';
-        // this.show.default.show = true;
-
-        Dialog({ title: '警告', content: '请填写完整信息' });
+        this.$dialog({ title: '警告', content: '请填写完整信息' }).then((action) => {
+          this.show.createUser = true;
+        }).catch();
         return;
       }
       // eslint-disable-next-line no-unused-vars
@@ -403,8 +393,7 @@ export default {
       });
       const res = newUser.mount();
       if (!res) {
-        this.show.default.content = '用户已存在';
-        this.show.default.show = true;
+        this.$dialog({ title: '警告', content: '用户已存在' });
       }
       this.cancelFn();
     },
@@ -418,15 +407,13 @@ export default {
         members: this.createGroup.checkList
       });
       if (!res) {
-        Dialog({ title: '警告', content: '群聊创建失败！信息不完整或已存在' })
+        this.$dialog({ title: '警告', content: '群聊创建失败！信息不完整或已存在' })
           .then((action) => {
             this.show.createGroup = true;
           })
           .catch((error) => {
             console.log(error);
           });
-        // this.show.default.content = '群聊创建失败！信息不完整或已存在';
-        // this.show.default.show = true;
       }
     },
     handleSelectionChange(val) {
@@ -501,7 +488,6 @@ export default {
       }
     },
     deleteFriendMsgFn(friend) {
-      console.log(this.getCurrentUser);
       const curUser = new User(this.getCurrentUser);
       console.log(curUser.deleteFriendMessage(friend.id));
       this.getMessageList(this.getCurrentUser.id);
@@ -509,7 +495,9 @@ export default {
     removeGroupFn(group) {
       const user = new User(this.getCurrentUser);
       const res = user.removeGroupById(group.id);
-      console.log(res);
+      if (!res) {
+        this.$dialog({ title: '警告', content: '群聊删除失败！' });
+      }
     }
   },
   computed: {
@@ -522,7 +510,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .left-aside {
   min-width: var(--sb-aside-width);
 
@@ -680,10 +668,6 @@ export default {
           align-items: center;
           width: 100%;
           padding: 0 10px;
-          .avatar {
-            width: 40px;
-            border-radius: 50%;
-          }
           .name {
             margin-inline-start: 10px;
           }
