@@ -32,18 +32,3 @@ export default {
   }
 };
 </script>
-
-<style lang="less">
-.pps-avatar {
-  width: fit-content;
-  height: fit-content;
-
-  .pps-avatar-img {
-    border-radius: 50%;
-
-    &:hover {
-      filter: brightness(75%);
-    }
-  }
-}
-</style>

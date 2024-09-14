@@ -1,5 +1,5 @@
 <template>
-  <el-card v-loading="isEmpty" v-resize-ob="cardResize">
+  <el-card v-resize-ob="cardResize">
     <el-table
       fit
       stripe
@@ -231,10 +231,12 @@ export default {
     }
   },
   computed: {},
-  async mounted() {
-    const { data: res } = await getUserModulesAPI();
-    this.bots = res;
-    this.isEmpty = false
+  mounted() {
+    this.isLoading = true;
+    getUserModulesAPI().then(({ data: res }) => {
+      this.bots = res;
+      this.isLoading = false;
+    });
   }
 };
 </script>

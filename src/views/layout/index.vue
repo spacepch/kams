@@ -4,9 +4,11 @@
     <el-container direction="vertical">
       <k-header></k-header>
       <el-main :class="{ isPadding, lessPadding: isSmall }">
-        <keep-alive include="kConsole">
-          <router-view></router-view>
-        </keep-alive>
+        <transition mode="out-in">
+          <keep-alive include="kConsole">
+            <router-view></router-view>
+          </keep-alive>
+        </transition>
       </el-main>
       <k-footer v-if="isFooter"></k-footer>
     </el-container>
@@ -105,7 +107,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .isPadding {
   // padding-left: 0 !important;
   // padding-right: 0 !important
@@ -142,5 +144,17 @@ export default {
       background: #888888; // 鼠标悬停时滚动条的颜色
     }
   }
+}
+.v-enter {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+.v-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.v-enter-active,
+.v-leave-active {
+  transition: all 0.5s;
 }
 </style>

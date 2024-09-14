@@ -23,16 +23,3 @@ export default {
   }
 };
 </script>
-
-<style>
-.pps-card {
-  position: relative;
-  width: auto;
-  height: fit-content;
-  padding: 5px;
-  box-shadow: 0 0 0 rgba(0, 0, 0, 0.144);
-  border-radius: 8px;
-  background: #fff;
-  /* padding-bottom: 10px; */
-}
-</style>

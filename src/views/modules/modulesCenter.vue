@@ -118,7 +118,7 @@ export default {
   mounted() {
     this.detailsLen = this.getData.length;
     this.calcPage(this.detailsLen);
-    this.$router.push('/modulesCenter/modulesItem');
+    // this.$router.push('/modulesCenter/modulesItem');
   }
 };
 </script>

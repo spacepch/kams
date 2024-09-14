@@ -41,6 +41,7 @@ const routes = [
         path: 'modulesCenter',
         meta: { title: '模块中心' },
         component: () => import('@/views/modules/modulesCenter'),
+        redirect: '/modulesCenter/modulesItem',
         children: [
           {
             path: 'modulesItem',

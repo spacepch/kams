@@ -1,8 +1,8 @@
 import { Message } from 'element-ui';
 import router from '@/router';
-// import config from '@/config';
 import axios from 'axios';
 // import store from '@/store/index';
+// import config from '@/config';
 
 let myAxios;
 
@@ -30,6 +30,9 @@ export const configureAxiosInstance = (store) => {
       return response;
     },
     (error) => {
+      if (!error.response) {
+        Message.error('请求失败，请检查后端服务是否正常！');
+      }
       if (error.response.status === 401) {
         router.push('/login');
         store.commit('layoutOption/updateToken', '');
