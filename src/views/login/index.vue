@@ -134,7 +134,7 @@ export default {
       'updateToken',
       'updateHost',
       'updatePort',
-      'updateSsl',
+      'updateProtocol',
       'updateUsername',
       'updatePassword'
     ]),
@@ -151,7 +151,7 @@ export default {
       const host = this.configForm.host.replace(/^(https?:\/\/)/, '');
       this.updateHost(host);
       this.updatePort(port);
-      this.updateSsl(this.http_or_https);
+      this.updateProtocol(this.http_or_https);
       configureAxiosInstance(this.$store);
       this.mountBackendConfigFn();
       this.$message.success('修改成功！');
@@ -159,7 +159,7 @@ export default {
     submitConfigFn() {
       const currSsl = window.location.protocol;
       console.log(currSsl);
-      const isConsistent = currSsl === 'http:' && currSsl !== this.http_or_https;
+      const isConsistent = currSsl === 'https:' && currSsl !== this.http_or_https;
       if (isConsistent) {
         return this.$dialog({
           title: '提示',
