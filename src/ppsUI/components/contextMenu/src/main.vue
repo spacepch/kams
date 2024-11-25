@@ -32,6 +32,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'pps-context-menu',
   directives: {
@@ -105,6 +106,15 @@ export default {
     },
     closeMenu() {
       this.showContextMenu = false;
+    },
+    bindClickEvents() {
+      this.$refs.container.addEventListener('click', this.openMenu, false);
+      this.setPosition();
+    },
+    bindContextEvents() {
+      this.$refs.container.addEventListener('contextmenu', this.openMenu, false);
+      window.addEventListener('contextmenu', this.closeMenu, true);
+      this.setPosition();
     }
   },
   mounted() {

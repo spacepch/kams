@@ -39,7 +39,6 @@
           ></pps-input>
           <pps-input
             clearable
-            viewPassword
             :content.sync="loginForm.password"
             icon="pps-icon-lock"
             type="password"
@@ -60,11 +59,22 @@
             style="position: relative"
           >
             <template v-slot:prepend>
-              <dp
-                @select="selectSslFn"
-                :current="http_or_https"
-                :menu="['https://', 'http://']"
-              ></dp>
+              <div class="cmd-search-select" @click="isShowSelect = !isShowSelect">
+                <input class="select-label" type="text" readonly :value="`${http_or_https}//`" />
+                <div class="icon">
+                  <i class="el-icon-arrow-down"></i>
+                </div>
+              </div>
+              <div class="select-dropdown" v-show="isShowSelect">
+                <div
+                  class="select-item"
+                  v-for="(item, index) in ['https:', 'http:']"
+                  :key="index"
+                  @click="selectSslFn(item)"
+                >
+                  {{ `${item}//` }}
+                </div>
+              </div>
             </template>
           </pps-input>
           <pps-input
@@ -105,14 +115,12 @@ import copyIcon from './copyIcon.vue';
 import { loginAPI } from '@/api';
 import { mapMutations, mapState } from 'vuex';
 import { configureAxiosInstance } from '@/utils/request';
-import dp from '@/components/dropdown';
 
 export default {
   name: 'myLogin',
-  components: { copyIcon, dp },
+  components: { copyIcon },
   data() {
     return {
-      t: '',
       tabsFlag: 'login',
       isShowDialog: false,
       loading: false,
@@ -125,7 +133,8 @@ export default {
       },
       configForm: {
         host: '',
-        port: ''
+        port: '',
+        wsHost: ''
       }
     };
   },
@@ -134,6 +143,7 @@ export default {
       'updateToken',
       'updateHost',
       'updatePort',
+      'updateWsHost',
       'updateSsl',
       'updateUsername',
       'updatePassword'
@@ -142,15 +152,19 @@ export default {
       this.tabsFlag = flag;
     },
     selectSslFn(ssl) {
-      // this.isShowSelect = false;
+      this.isShowSelect = false;
       this.http_or_https = ssl;
     },
     updataBackendConfigFn() {
-      const ssl = this.http_or_https === 'https://';
+      const ssl = this.http_or_https === 'https:';
+      // console.log(this.configForm.port);
       const port = this.configForm.port || (ssl ? 443 : 80);
-      const host = this.configForm.host.replace(/^(https?:\/\/)/, '');
+      console.log(port);
+      const wsHost = (ssl ? 'wss://' : 'ws://') + this.configForm.host;
+      const host = this.http_or_https + '//' + this.configForm.host;
       this.updateHost(host);
       this.updatePort(port);
+      this.updateWsHost(wsHost);
       this.updateSsl(this.http_or_https);
       configureAxiosInstance(this.$store);
       this.mountBackendConfigFn();
@@ -158,18 +172,21 @@ export default {
     },
     submitConfigFn() {
       const currSsl = window.location.protocol;
-      console.log(currSsl);
-      const isConsistent = currSsl === 'http:' && currSsl !== this.http_or_https;
+      const isConsistent = currSsl === 'https:' && currSsl !== this.http_or_https;
       if (isConsistent) {
-        return this.$dialog({
-          title: '提示',
-          content: '配置与当前页面协议不一致, 是否继续?'
+        return this.$confirm('配置与当前页面协议不一致, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
           .then(() => {
             this.updataBackendConfigFn();
           })
-          .catch((e) => {
-            console.log(e);
+          .catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消修改'
+            });
           });
       }
       this.updataBackendConfigFn();
@@ -177,7 +194,8 @@ export default {
     resetConfigFn() {
       this.configForm = {
         host: this.host,
-        port: this.port
+        port: this.port,
+        wsHost: this.wsHost
       };
       this.$message.info('已重置！');
     },
@@ -196,8 +214,7 @@ export default {
         this.loading = false;
         if (error.response.status === 404) return this.showDialog('404');
         if (error.response.status === 401) return this.showDialog('401');
-        console.log(error);
-        this.$dialog({ title: '错误', content: error.message }).catch((action) => {});
+        this.showDialog('', error.message);
       }
     },
     showDialog(name, msg) {
@@ -225,12 +242,12 @@ export default {
       this.isShowDialog = true;
     },
     mountBackendConfigFn() {
-      this.configForm.host = this.host;
+      this.configForm.host = this.host.replace(/^(https?:\/\/)/, '');
       this.configForm.port = this.port;
     }
   },
   computed: {
-    ...mapState('layoutOption', ['host', 'port', 'protocol', 'username', 'password']),
+    ...mapState('layoutOption', ['host', 'port', 'wsHost', 'ssl', 'username', 'password']),
     whichTab() {
       return this.tabsFlag === 'login';
     }
@@ -242,11 +259,11 @@ export default {
       password: this.password
     };
     this.configForm = {
-      host: this.host,
-      port: this.port
+      host: this.host.replace(/^(https?:\/\/)/, ''),
+      port: this.port,
+      wsHost: this.wsHost
     };
-    this.http_or_https = this.protocol || 'https://';
-    console.log(this.host);
+    this.http_or_https = this.ssl || 'https:';
   }
 };
 </script>

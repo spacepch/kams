@@ -5,7 +5,7 @@ export default {
     isFoldAside: false,
     host: '',
     port: '',
-    wsHost: '',
+    protocol: '',
     username: '',
     password: ''
   },
@@ -22,8 +22,8 @@ export default {
     updatePort(state, val = '') {
       state.port = val;
     },
-    updateWsHost(state, val = '') {
-      state.wsHost = val;
+    updateProtocol(state, val = '') {
+      state.protocol = val;
     },
     updateUsername(state, val = '') {
       state.username = val;

@@ -16,7 +16,6 @@
 </template>
 
 <script>
-// import Ws from '@/utils/webSocket';
 import { mapGetters } from 'vuex';
 import kAside from './aside.vue';
 import kFooter from './footer.vue';
@@ -52,7 +51,9 @@ export default {
       // 判断是否最新版本
       return new Promise((resolve, reject) => {
         getVersionAPI().then(({ data: res }) => {
-          if (res['@kotori-bot/kotori-plugin-webui'] !== `^${version}`) {
+          const lastVersion = res['@kotori-bot/kotori-plugin-webui'].slice(1).split('.').join('');
+          const localVersion = version.split('.').join('');
+          if (localVersion < lastVersion) {
             this.$message.error('当前版本过低，请更新webui插件');
             if (!this.$route.path.includes('/login')) {
               this.$store.commit('layoutOption/updateToken');

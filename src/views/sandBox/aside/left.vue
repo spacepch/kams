@@ -77,7 +77,7 @@
     <k-sb-aside class="aside-list">
       <header class="k-chat-header">
         <k-tab :tabs="['私聊', '群聊']" @changeTab="toggleMsgTabFn"></k-tab>
-        <button class="add-friend-group" @click="show.addFriend = true">
+        <gray-button class="icon-btn" @click.native="show.addFriend = true">
           <svg
             t="1723230695956"
             class="icon"
@@ -95,7 +95,10 @@
               p-id="34316"
             ></path>
           </svg>
-        </button>
+        </gray-button>
+        <gray-button class="icon-btn" v-show="1">
+          <pps-icon icon="pps-icon-side-show"></pps-icon>
+        </gray-button>
       </header>
       <template #inner>
         <k-menu
@@ -115,8 +118,8 @@
           >
             <div class="list-item">
               <img class="avatar" alt="" />
-              <pps-avatar :src="item.avatar" size="40" ></pps-avatar>
-              <div class="name">{{ item.name }}</div>
+              <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
+              <div class="name" :title="item.name">{{ item.name }}</div>
               <span class="closeBtn" @click="deleteFriendMsgFn(item)">
                 <i class="el-icon-circle-close"></i>
               </span>
@@ -320,11 +323,12 @@ import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import ADD_USER_IMG from '@/assets/addAvatar.svg';
 import REMOVE_USER from '@/assets/removeAvatar.svg';
+import grayButton from '../ui/grayButton.vue';
 // import { Dialog } from '@/ppsUI/packages';
 
 export default {
   name: 'sb-left-aside',
-  components: { kSbAside, kContainer, kMenu, kMenuItem, kTab },
+  components: { kSbAside, kContainer, kMenu, kMenuItem, kTab, grayButton },
   data() {
     return {
       users: [],
@@ -378,9 +382,11 @@ export default {
       const adder = this.createUser;
       const hasData = adder.id && adder.name && adder.age && adder.sex;
       if (!hasData) {
-        this.$dialog({ title: '警告', content: '请填写完整信息' }).then((action) => {
-          this.show.createUser = true;
-        }).catch();
+        this.$dialog({ title: '警告', content: '请填写完整信息' })
+          .then((action) => {
+            this.show.createUser = true;
+          })
+          .catch();
         return;
       }
       // eslint-disable-next-line no-unused-vars
@@ -512,7 +518,7 @@ export default {
 
 <style lang="scss" scoped>
 .left-aside {
-  min-width: var(--sb-aside-width);
+  height: var(--k-main);
 
   .aside-users {
     width: 60px;
@@ -638,20 +644,9 @@ export default {
       align-items: center;
       border-bottom: 2px solid #e9e9e9;
 
-      .add-friend-group {
-        width: 33px;
-        height: 33px;
-        padding: 0;
-        background-color: #eeeeee;
-        border-radius: 5px;
-        border: none;
-        margin-left: 20px;
-
-        &:hover {
-          background-color: #e2e2e2;
-        }
-        &:active {
-          background-color: #d7d7d7;
+      .icon-btn {
+        &:nth-of-type(1) {
+          margin-left: 10px;
         }
       }
       .k-tab-wrapper {

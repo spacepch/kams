@@ -9,9 +9,11 @@ export default {
     Vue.prototype.$ws = {};
 
     Vue.prototype.$ws.init = (task) => {
-      const host = store.state.layoutOption.wsHost;
+      const host = store.state.layoutOption.host;
+      const port = store.state.layoutOption.port;
+      const protocol = store.state.layoutOption.protocol;
       const token = store.state.layoutOption.token;
-      const url = `${host}/webui/${token}`;
+      const url = `${protocol === 'https://' ? 'wss:' : 'ws:'}//${host}:${port}/webui/${token}`;
       if (wsInstance) return console.warn('WebSocket已经开启，不能重复初始化。');
       wsInstance = new WebSocket(url);
       Vue.prototype.$message.success('WebSocket初始化成功');
@@ -31,6 +33,7 @@ export default {
         store.commit('webSocketOption/updateRam');
       };
       wsInstance.onerror = (error) => {
+        console.log(error);
         Vue.prototype.$message.error(`WebSocket 发生错误：${String(error)}`);
       };
     };

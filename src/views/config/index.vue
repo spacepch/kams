@@ -79,7 +79,7 @@
                   style="position: relative"
                 >
                   <template v-slot:prepend>
-                    <div class="cmd-search-select" @click="isShowSelect = !isShowSelect">
+                    <!-- <div class="cmd-search-select" @click="isShowSelect = !isShowSelect">
                       <input class="select-label" type="text" readonly :value="`${ssl}//`" />
                       <div class="icon">
                         <i class="el-icon-arrow-down"></i>
@@ -94,7 +94,12 @@
                       >
                         {{ `${item}//` }}
                       </div>
-                    </div>
+                    </div> -->
+                    <dp
+                      @select="selectSslFn"
+                      :current="http_or_https"
+                      :menu="['https://', 'http://']"
+                    ></dp>
                   </template>
                 </pps-input>
               </div>
@@ -116,6 +121,7 @@
             </div>
           </div>
         </pps-form>
+        <!-- <dp :menu="['ss', 'dd']" :current="http_or_https"></dp> -->
       </main>
       <k-aside></k-aside>
     </k-container>
@@ -128,6 +134,7 @@ import kContainer from '@/components/layout/container.vue';
 import { mapMutations, mapState } from 'vuex';
 import { configureAxiosInstance } from '@/utils/request';
 import kAside from '@/components/layout/aside.vue';
+import dp from '@/components/dropdown';
 
 export default {
   data() {
@@ -161,12 +168,12 @@ export default {
       },
       isLoading: false,
       isShowSelect: false,
-      ssl: 'https:',
+      http_or_https: 'https:',
       listWidth: 0,
       isPadding: 1
     };
   },
-  components: { kContainer, kAside },
+  components: { kContainer, kAside, dp },
 
   methods: {
     ...mapMutations('layoutOption', ['updateHost', 'updatePort', 'updateWsHost']),
@@ -185,10 +192,10 @@ export default {
       this.$message.info('已重置！');
     },
     updataBackendConfigFn() {
-      const ssl = this.ssl === 'https:';
-      const port = this.hostForm.port || ssl ? 443 : 80;
+      const ssl = this.ssl === 'https://';
+      const port = this.hostForm.port || (ssl ? 443 : 80);
       const wsHost = (ssl ? 'wss://' : 'ws://') + this.hostForm.host;
-      const host = this.ssl + '//' + this.hostForm.host;
+      const host = this.ssl + this.hostForm.host;
       this.updateHost(host);
       this.updatePort(port);
       this.updateWsHost(wsHost);
@@ -230,7 +237,6 @@ export default {
       this.$message.info('已重置！');
     },
     selectSslFn(ssl) {
-      this.isShowSelect = false;
       this.ssl = ssl;
     },
     cardResize(w, _) {
@@ -244,11 +250,12 @@ export default {
     }
   },
   computed: {
-    ...mapState('layoutOption', ['host', 'port', 'wsHost'])
+    ...mapState('layoutOption', ['host', 'port', 'wsHost', 'protocol'])
   },
   mounted() {
     this.getConfig();
     this.mountBackendConfigFn();
+    this.http_or_https = this.protocol || 'https://';
   }
 };
 </script>

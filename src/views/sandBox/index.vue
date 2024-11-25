@@ -1,13 +1,19 @@
 <template>
-  <k-container class="k-container" direction="horizontal">
+  <k-container class="k-container" direction="horizontal" v-resize-ob="screenResize">
     <!-- 好友、群聊列表 -->
     <sb-left-aside></sb-left-aside>
-    <k-container direction="vertical" style="width: 100%">
+    <k-container v-show="show.isShowChatBox" direction="vertical" style="width: 100%">
       <!-- 聊天窗口页头 -->
-      <header class="k-chat-header"></header>
-      <k-container direction="horizontal">
+      <header class="k-chat-header" v-show="chatTarget">
+        <gray-button class="icon-btn" v-show="1">
+          <pps-icon icon="pps-icon-side-show"></pps-icon>
+        </gray-button>
+        <div class="k-chat-header-content">
+          <span class="k-chat-header-title">{{ chatTarget }}</span>
+        </div>
+      </header>
+      <k-container direction="horizontal" class="k-chat-main">
         <sb-chat-main></sb-chat-main>
-        <!-- <button @click="click">点击</button> -->
         <!-- 右侧、群聊成员 -->
         <sb-right-aside v-show="show.isShowGroups"></sb-right-aside>
       </k-container>
@@ -23,16 +29,19 @@ import kContainer from '@/components/layout/container';
 import sbLeftAside from './aside/left.vue';
 import sbRightAside from './aside/right.vue';
 import sbChatMain from './main/chat.vue';
+import grayButton from './ui/grayButton.vue';
 export default {
   name: 'sandBox',
-  components: { kContainer, sbLeftAside, sbRightAside, sbChatMain },
+  components: { kContainer, sbLeftAside, sbRightAside, sbChatMain, grayButton },
   data() {
     return {
       show: {
         isShowUsers: true,
-        isShowGroups: true
+        isShowGroups: true,
+        isShowChatBox: true
       },
-      admin: null
+      admin: null,
+      chatTarget: null
     };
   },
   methods: {
@@ -89,14 +98,10 @@ export default {
       // eslint-disable-next-line no-new
       new User({ id, name, age, sex });
     },
-    click() {
-      // eslint-disable-next-line no-undef
-      // const dropper = new EyeDropper();
-      // const result = await dropper.open();
-      // console.log(result);
-      for (let i = 0; i < 15; i++) {
-        this.createUser({ id: i, name: `test${i}`, age: `1${i}`, sex: '男' });
-      }
+    screenResize(x, y) {
+      // const width = Math.floor(x);
+      // const height = Math.floor(y);
+      // console.log(width, height);
     }
   },
   computed: {
@@ -115,18 +120,19 @@ export default {
 .k-container ::v-deep div {
   box-sizing: border-box;
 }
-// .k-container ::v-deep .pps-input {
-//   width: 250px;
-//   height: 38px;
-//   background: #fff;
-// }
 .k-container {
-  height: 100%;
+  // height: 100%;
+  --sb-header-height: 60px;
+}
+.k-chat-main{
+  flex-grow: 1;
 }
 .k-container ::v-deep .k-chat-header {
-  height: 60px;
+  height: var(--sb-header-height);
 }
 .k-chat-header {
+  display: flex;
+  align-items: center;
   border-bottom: 2px solid #e9e9e9;
   background-color: #f2f2f2;
 }

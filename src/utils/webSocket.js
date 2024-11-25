@@ -2,9 +2,12 @@ import Vue from 'vue';
 import { Message } from 'element-ui';
 import store from '@/store';
 
-const host = store.state.layoutOption.wsHost;
+const host = store.state.layoutOption.host;
+const port = store.state.layoutOption.port;
+const protocol = store.state.layoutOption.protocol;
 const token = store.state.layoutOption.token;
-const url = `${host}/webui/${token}`;
+const url = `${protocol === 'https://' ? 'wss' : 'ws'}://${host}:${port}/webui/${token}`;
+console.log('ws url', url);
 
 Vue.prototype.$message = Message;
 

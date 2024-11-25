@@ -93,7 +93,7 @@ export default {
         this.$ws.init();
       }
       const wsMsg = { command: this.inputData, action: this.action };
-      console.log(this.$ws.instance);
+      // console.log(this.$ws.instance);
       if (this.$ws.instance.readyState === 0) {
         this.$nextTick(() => {
           this.sendFn(wsMsg);

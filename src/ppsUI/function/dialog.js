@@ -3,8 +3,7 @@ import Vue from 'vue';
 import DialogComponent from '../components/dialog/src/main';
 
 let instance, currentMsg;
-// eslint-disable-next-line prefer-const
-let messageBox = [];
+const messageBox = [];
 
 const DialogConstructor = Vue.extend(DialogComponent);
 
@@ -16,15 +15,17 @@ function initInstance() {
 }
 
 const defaultCallback = (action) => {
-  if (currentMsg.resolve) {
-    if (action === 'confirm') {
-      if (instance.showInput) {
-        currentMsg.resolve({ value: instance.inputValue, action });
+  if (currentMsg) {
+    const { resolve, reject, callback } = currentMsg;
+    if (typeof callback === 'function') {
+      callback(action);
+    }
+    if (resolve) {
+      if (action === 'confirm') {
+        resolve(action);
       } else {
-        currentMsg.resolve(action);
+        reject(action);
       }
-    } else if (currentMsg.reject && (action === 'cancel' || action === 'close')) {
-      currentMsg.reject(action);
     }
   }
 };

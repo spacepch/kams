@@ -20,14 +20,16 @@
         :id="label"
         v-bind="$attrs"
         v-on="$listeners"
-        :type="type"
+        :type="viewPassword ? (showPassword ? 'text' : 'password') : type"
         class="pps-input"
         :disabled="disabled"
         :placeholder="placeholder"
         v-model.trim="keyWord"
+        @blur="handleBlur"
       />
-      <span class="pps-input-suffix" v-if="clearable" @click="clearFn()">
-        <i class="icon-clear"></i>
+      <span class="pps-input-suffix">
+        <i class="icon icon-clear" v-if="clearable" @click="clearFn()"></i>
+        <i class="icon icon-view" v-if="showPasswordIcon" @click="viewPasswordFn()"></i>
       </span>
       <div class="operation" v-if="$slots.default">
         <slot></slot>
@@ -45,7 +47,8 @@ export default {
   inheritAttrs: false,
   data() {
     return {
-      keyWord: ''
+      keyWord: '',
+      showPassword: false
     };
   },
   props: {
@@ -86,6 +89,12 @@ export default {
         return false;
       }
     },
+    viewPassword: {
+      type: Boolean,
+      default() {
+        return false;
+      }
+    },
     clearable: {
       type: Boolean,
       default() {
@@ -105,9 +114,21 @@ export default {
       this.keyWord = '';
       this.$refs.input.focus();
       this.afterClear();
+    },
+    viewPasswordFn() {
+      this.showPassword = !this.showPassword;
+    },
+    handleBlur(e) {
+      if (!this.keyWord) {
+        this.showPassword = false;
+      }
     }
   },
-  computed: {},
+  computed: {
+    showPasswordIcon() {
+      return this.viewPassword && this.keyWord;
+    }
+  },
   watch: {
     keyWord() {
       this.$emit('update:content', this.keyWord);

@@ -241,10 +241,13 @@ export default {
 };
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .el-card {
   margin-top: 10px;
   height: var(--el-card-height);
+  &::v-deep .pps-dialog-content {
+    max-width: 500px;
+  }
 }
 .el-table {
   font-size: 14px;
@@ -274,8 +277,5 @@ export default {
   &::-webkit-scrollbar-thumb:hover {
     background: #888888; // 鼠标悬停时滚动条的颜色
   }
-}
-&::v-deep .pps-dialog-content {
-  max-width: 500px;
 }
 </style>

@@ -78,21 +78,30 @@
       height: 100%;
       display: flex;
       align-items: center;
-      .icon-clear {
+
+      .icon {
         font-size: 14px;
         font-style: normal;
         font-family: iconfont;
         color: rgba(0, 0, 0, 0.4);
         cursor: pointer;
-        display: none;
         background: #fff;
+        padding: 0 5px;
 
         &:hover {
           color: rgba(0, 0, 0, 0.8);
           display: initial;
         }
+      }
+      .icon-clear {
+        display: none;
         &::before {
           content: '\e78d';
+        }
+      }
+      .icon-view {
+        &::before {
+          content: '\e6ce';
         }
       }
     }
