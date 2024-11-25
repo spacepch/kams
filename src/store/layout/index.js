@@ -3,11 +3,11 @@ export default {
   state: {
     token: '',
     isFoldAside: false,
-    host: '',
-    port: '',
-    protocol: '',
-    username: '',
-    password: ''
+    host: 'serve.painchornds.top',
+    port: '720',
+    protocol: 'http:',
+    username: 'space',
+    password: '123456'
   },
   mutations: {
     updateToken(state, val = '') {
