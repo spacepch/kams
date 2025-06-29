@@ -32,6 +32,9 @@ $btnNames: default, primary, confirm, danger, text;
       } @else {
         color: $textColor;
         border: 1px solid $textColor;
+        &:disabled {
+          color: lighten(#2e2e2e, 20%);
+        }
       }
     }
     &:active {
@@ -43,6 +46,10 @@ $btnNames: default, primary, confirm, danger, text;
       border: 1px solid lighten($color, 20%);
       box-shadow: initial;
       cursor: not-allowed;
+      @if $name == default {
+        color: lighten(#2e2e2e, 20%);
+        border: 1px solid lighten(#c3c5c7, 10%);
+      }
     }
     @if $name == default {
       color: initial;

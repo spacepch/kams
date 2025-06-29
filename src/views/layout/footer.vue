@@ -59,8 +59,8 @@ export default {
   mounted() {
     this.$ws.bus.$on('wsMessage', (msg) => {
       if (msg.type === 'stats') {
-        this.updateCpu(msg.data.cpu);
-        this.updateRam(msg.data.ram);
+        // this.updateCpu(msg.data.cpu);
+        // this.updateRam(msg.data.ram);
       }
     });
     getStatusAPI().then(({ data: res }) => {

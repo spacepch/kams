@@ -3,11 +3,20 @@
     <!-- 切换用户导航栏 -->
     <k-sb-aside class="aside-users">
       <header class="k-chat-header">
-        <el-tooltip effect="dark" content="添加用户" placement="right">
+        <el-tooltip v-if="show.isCollapseMsg" effect="dark" content="添加用户" placement="right">
           <div class="add-user-avatar" @click="show.createUser = true">
             <img class="add-user" :src="ADD_USER_IMG" alt="添加用户" />
           </div>
         </el-tooltip>
+        <gray-button
+          v-else
+          class="icon-btn"
+          @click.native="show.isCollapseMsg = !show.isCollapseMsg"
+        >
+          <el-tooltip effect="dark" content="展开消息列表" placement="right">
+            <pps-icon icon="pps-icon-side-hide"></pps-icon>
+          </el-tooltip>
+        </gray-button>
       </header>
       <template #inner>
         <k-menu
@@ -58,7 +67,6 @@
                 </div>
               </template>
               <div class="user-avatar" slot="content">
-                <!-- <img class="user-avatar-img" alt="" /> -->
                 <pps-avatar :src="user.avatar" size="40"></pps-avatar>
               </div>
             </pps-context-menu>
@@ -74,65 +82,73 @@
     </k-sb-aside>
 
     <!-- 好友群聊 列表 -->
-    <k-sb-aside class="aside-list">
-      <header class="k-chat-header">
-        <k-tab :tabs="['私聊', '群聊']" @changeTab="toggleMsgTabFn"></k-tab>
-        <gray-button class="icon-btn" @click.native="show.addFriend = true">
-          <svg
-            t="1723230695956"
-            class="icon"
-            viewBox="0 0 1024 1024"
-            version="1.1"
-            xmlns="http://www.w3.org/2000/svg"
-            p-id="34315"
-            width="16"
-            height="16"
-            data-spm-anchor-id="a313x.search_index.0.i6.27883a81IeQ0Uy"
+    <transition>
+      <k-sb-aside class="aside-list" v-show="show.isCollapseMsg">
+        <header class="k-chat-header">
+          <k-tab
+            :tabs="['私聊', '群聊']"
+            @changeTab="toggleMsgTabFn"
+            :class="{ isTransparent: !show.isCollapseMsg }"
+          ></k-tab>
+          <el-tooltip effect="dark" content="加好友/群" placement="bottom">
+            <gray-button class="icon-btn" @click.native="show.addFriend = true">
+              <svg
+                t="1723230695956"
+                class="icon"
+                viewBox="0 0 1024 1024"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                p-id="34315"
+                width="16"
+                height="16"
+                data-spm-anchor-id="a313x.search_index.0.i6.27883a81IeQ0Uy"
+              >
+                <path
+                  d="M914.618182 477.090909H546.909091V109.381818c0-18.618182-16.290909-34.909091-34.909091-34.909091s-34.909091 16.290909-34.909091 34.909091v367.709091H109.381818c-18.618182 0-34.909091 16.290909-34.909091 34.909091s16.290909 34.909091 34.909091 34.909091h367.709091v367.709091c0 18.618182 16.290909 34.909091 34.909091 34.909091s34.909091-16.290909 34.909091-34.909091V546.909091h367.709091c18.618182 0 34.909091-16.290909 34.909091-34.909091s-16.290909-34.909091-34.909091-34.909091z"
+                  fill="#7a7a7a"
+                  p-id="34316"
+                ></path>
+              </svg>
+            </gray-button>
+          </el-tooltip>
+          <!-- 收起消息列表 -->
+          <el-tooltip effect="dark" content="收起消息列表" placement="right">
+            <gray-button class="icon-btn" @click.native="show.isCollapseMsg = !show.isCollapseMsg">
+              <pps-icon icon="pps-icon-side-show"></pps-icon>
+            </gray-button>
+          </el-tooltip>
+        </header>
+        <template #inner>
+          <k-menu
+            class="list"
+            ref="msgMenuRef"
+            :default-active="null"
+            :key="messageList[0]?.id"
+            @select="selectMsgFn"
+            active-color="#752bec"
+            :active-shape="['background']"
+            text-color="#061e26"
+            background-color="#f0e8fd"
+            mode="column"
           >
-            <path
-              d="M914.618182 477.090909H546.909091V109.381818c0-18.618182-16.290909-34.909091-34.909091-34.909091s-34.909091 16.290909-34.909091 34.909091v367.709091H109.381818c-18.618182 0-34.909091 16.290909-34.909091 34.909091s16.290909 34.909091 34.909091 34.909091h367.709091v367.709091c0 18.618182 16.290909 34.909091 34.909091 34.909091s34.909091-16.290909 34.909091-34.909091V546.909091h367.709091c18.618182 0 34.909091-16.290909 34.909091-34.909091s-16.290909-34.909091-34.909091-34.909091z"
-              fill="#7a7a7a"
-              p-id="34316"
-            ></path>
-          </svg>
-        </gray-button>
-        <gray-button class="icon-btn" v-show="1">
-          <pps-icon icon="pps-icon-side-show"></pps-icon>
-        </gray-button>
-      </header>
-      <template #inner>
-        <k-menu
-          class="list"
-          v-if="messageList?.length"
-          active-color="#752bec"
-          :active-shape="['background']"
-          text-color="#061e26"
-          background-color="#f0e8fd"
-          mode="column"
-        >
-          <k-menu-item
-            v-for="(item, index) in messageList"
-            :key="index"
-            :index="item.id"
-            height="60"
-          >
-            <div class="list-item">
-              <img class="avatar" alt="" />
-              <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
-              <div class="name" :title="item.name">{{ item.name }}</div>
-              <span class="closeBtn" @click="deleteFriendMsgFn(item)">
-                <i class="el-icon-circle-close"></i>
-              </span>
-            </div>
-          </k-menu-item>
-        </k-menu>
-      </template>
-    </k-sb-aside>
+            <k-menu-item v-for="item in messageList" :key="item.id" :index="item.id" height="60">
+              <div class="list-item">
+                <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
+                <div class="name" :title="item.name">{{ item.name }}</div>
+                <span class="closeBtn" @click="deleteFriendMsgFn(item)">
+                  <i class="el-icon-circle-close"></i>
+                </span>
+              </div>
+            </k-menu-item>
+          </k-menu>
+        </template>
+      </k-sb-aside>
+    </transition>
 
     <!-- 创建用户 对话框 -->
     <pps-dialog
       :show.sync="show.createUser"
-      @canceled="cancelFn"
+      @canceled="cancelCreateUserFn"
       @confirmed="createUserFn"
       title="创建用户"
     >
@@ -150,7 +166,7 @@
             placeholder="请输入年龄"
           />
           <div class="user-sex-wrapper">
-            性别：
+            <label class="sex-text-label" for="t">性别:</label>
             <el-radio v-model="createUser.sex" label="男">男</el-radio>
             <el-radio v-model="createUser.sex" label="女">女</el-radio>
           </div>
@@ -173,11 +189,12 @@
       class="add-friend-dialog"
       :after-show="emitTabUpdate"
       :show.sync="show.addFriend"
+      :callback="closeAddObjDialogFn"
       title="全站搜索"
     >
       <template v-slot:content>
         <pps-input
-          @input="searchFn"
+          @change="searchFn('input')"
           :content.sync="searchDialog.input"
           :placeholder="`请输入${searchDialog.tabs[searchDialog.index]} ID`"
         />
@@ -196,7 +213,9 @@
           <el-table-column align="center" prop="id" label="id"></el-table-column>
           <el-table-column align="center" label="操作">
             <template slot-scope="scope">
-              <pps-button @click="addFriendFn(scope.row.id)">添加</pps-button>
+              <pps-button @click="addFriendFn(scope.row.id)" :disabled="isAdded">
+                {{ isAdded ? '已添加' : '添加' }}
+              </pps-button>
             </template>
           </el-table-column>
         </el-table>
@@ -216,16 +235,16 @@
             <h4>好友列表</h4>
             <el-table
               @selection-change="handleSelectionChange"
-              :show-header="false"
+              :show-header="true"
               :data="getCurrentUser.friends"
             >
-              <el-table-column type="selection" align="right"></el-table-column>
-              <el-table-column align="center">
+              <el-table-column type="selection" align="center" label="选择"></el-table-column>
+              <el-table-column align="center" label="头像">
                 <template slot-scope="scope">
                   <img :src="scope.row.avatar" alt="" />
                 </template>
               </el-table-column>
-              <el-table-column prop="name"></el-table-column>
+              <el-table-column prop="name" align="center" label="名称"></el-table-column>
             </el-table>
           </div>
           <div class="right">
@@ -259,7 +278,7 @@
     <!-- 群聊列表 -->
     <pps-dialog :show.sync="show.groupList" title="群聊列表">
       <template v-slot:content>
-        <el-table :data="getCurrentUser.groups">
+        <el-table :data="curUserGroupListFn()">
           <el-table-column align="center" label="群聊头像">
             <template slot-scope="scope">
               <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
@@ -268,14 +287,16 @@
           <el-table-column align="center" prop="id" label="群聊id"></el-table-column>
           <el-table-column align="center" prop="name" label="群聊名称"></el-table-column>
           <el-table-column align="center" label="操作">
-            <template slot-scope="scope">
+            <template slot-scope="{ row }">
               <pps-button
-                :disabled="scope.row.role !== 'lord'"
+                :disabled="row.lord !== getCurrentUser.id"
+                v-if="row.lord === getCurrentUser.id"
                 theme="danger"
-                @click="removeGroupFn(scope.row)"
+                @click="removeGroupFn(row)"
               >
                 解散
               </pps-button>
+              <pps-button v-else theme="primary" @click="leaveGroupFn(scope.row)">退出</pps-button>
             </template>
           </el-table-column>
         </el-table>
@@ -324,7 +345,6 @@ import Administrators from '@/utils/sandBox/administrators';
 import ADD_USER_IMG from '@/assets/addAvatar.svg';
 import REMOVE_USER from '@/assets/removeAvatar.svg';
 import grayButton from '../ui/grayButton.vue';
-// import { Dialog } from '@/ppsUI/packages';
 
 export default {
   name: 'sb-left-aside',
@@ -344,7 +364,8 @@ export default {
         addFriend: false,
         friendList: false,
         groupList: false,
-        userInfo: false
+        userInfo: false,
+        isCollapseMsg: true
       },
       createUser: {
         name: null,
@@ -369,10 +390,27 @@ export default {
       tableData: []
     };
   },
+  props: {
+    screen: {
+      type: Object,
+      default() {
+        return { width: 0, height: 0 };
+      }
+    },
+    updateChatTarget: {
+      type: Function,
+      default() {
+        return null;
+      }
+    }
+  },
   methods: {
     switchUserFn(id) {
-      this.getMessageList(id);
       this.$store.commit('sandBox/SWITCH_USER', id);
+      this.$refs.msgMenuRef.activeIndex = null;
+      this.getMessageList();
+      this.$store.commit('sandBox/SWITCH_CHAT');
+      console.log('switchUser');
     },
     removeUserFn(id) {
       const admin = new Administrators();
@@ -386,7 +424,9 @@ export default {
           .then((action) => {
             this.show.createUser = true;
           })
-          .catch();
+          .catch((error) => {
+            console.log(error);
+          });
         return;
       }
       // eslint-disable-next-line no-unused-vars
@@ -399,9 +439,13 @@ export default {
       });
       const res = newUser.mount();
       if (!res) {
-        this.$dialog({ title: '警告', content: '用户已存在' });
+        this.$dialog({ title: '警告', content: '用户已存在' })
+          .then((action) => {})
+          .catch((error) => {
+            console.log(error);
+          });
       }
-      this.cancelFn();
+      this.cancelCreateUserFn();
     },
     createGroupFn() {
       const admin = new Administrators();
@@ -420,13 +464,14 @@ export default {
           .catch((error) => {
             console.log(error);
           });
+      } else {
+        this.getMessageList();
       }
     },
     handleSelectionChange(val) {
       this.createGroup.checkList = val;
-      // console.log(val);
     },
-    cancelFn() {
+    cancelCreateUserFn() {
       this.createUser = {
         name: null,
         avatar: null,
@@ -442,7 +487,7 @@ export default {
     },
     toggleMsgTabFn(tab) {
       this.messageMode = tab;
-      this.getMessageList(this.getCurrentUser.id);
+      this.getMessageList();
     },
     switchSearchTabFn(tab) {
       this.searchDialog.index = tab;
@@ -452,21 +497,36 @@ export default {
     },
     searchFn() {
       this.tableData = [];
-      this.$nextTick(() => {
-        const id = this.searchDialog.input;
-        const admin = new Administrators();
-        switch (this.searchDialog.index) {
-          case 0:
-            admin.getUserById(id) && this.tableData.push(admin.getUserById(id));
-            break;
-          case 1:
-            admin.getGroupById(id) && this.tableData.push(admin.getGroupById(id));
-            break;
-          case 2:
-            // this.tableData = admin.getAllRobots();
-            break;
+      const id = this.searchDialog.input;
+      const admin = new Administrators();
+      switch (this.searchDialog.index) {
+        case 0: {
+          const user = admin.getUserById(`user-${id}`);
+          if (user) {
+            const self = this.getCurrentUser;
+            const isAdded = self.friends.some((friend) => friend.id === user.id);
+            this.tableData.push({ ...user, isAdded });
+          }
+          break;
         }
-      });
+        case 1: {
+          const group = admin.getGroupById(`group-${id}`);
+          if (group) {
+            const self = this.getCurrentUser;
+            const isAdded = self.groups.some((g) => g.id === group.id);
+            this.tableData.push({ ...group, isAdded });
+          }
+          break;
+        }
+        case 2:
+          // this.tableData = admin.getAllRobots();
+          break;
+      }
+    },
+    closeAddObjDialogFn() {
+      console.log('closeAddObjDialogFn');
+      this.tableData = [];
+      this.searchDialog.input = '';
     },
     addFriendFn(id) {
       const user = new User(this.getCurrentUser);
@@ -475,20 +535,28 @@ export default {
           user.addFriend(id);
           break;
         case 1:
+          user.addGroupById(id);
           break;
         case 2:
           // this.tableData = admin.getAllRobots();
           break;
       }
+      this.getMessageList();
     },
     emitTabUpdate() {
       this.$refs['k-tab'].changeTabFn();
     },
-    getMessageList(id) {
+    getMessageList() {
       const user = new User(this.getCurrentUser);
       this.messageList = [];
       if (this.messageMode) {
-        this.messageList = user.getAllGroups();
+        const g_list = user.getAllGroups().map(({ id }) => id);
+        const admin = new Administrators();
+        admin.getAllGroup().forEach((group) => {
+          if (g_list.includes(group.id)) {
+            this.messageList.push(group);
+          }
+        });
       } else {
         this.messageList = user.getAllFriend() || [];
       }
@@ -496,7 +564,7 @@ export default {
     deleteFriendMsgFn(friend) {
       const curUser = new User(this.getCurrentUser);
       console.log(curUser.deleteFriendMessage(friend.id));
-      this.getMessageList(this.getCurrentUser.id);
+      this.getMessageList();
     },
     removeGroupFn(group) {
       const user = new User(this.getCurrentUser);
@@ -504,14 +572,70 @@ export default {
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊删除失败！' });
       }
+      this.getMessageList();
+    },
+    leaveGroupFn(group) {
+      const user = new User(this.getCurrentUser);
+      const res = user.leaveGroupById(group.id);
+      if (!res) {
+        this.$dialog({ title: '警告', content: '群聊退出失败！' });
+      }
+      this.getMessageList();
+    },
+    curUserGroupListFn() {
+      const group_list = new User(this.getCurrentUser).getAllGroups();
+      return group_list;
+    },
+    screenResize(w, h) {
+      const width = Math.floor(w);
+      if (width < 600) {
+        this.show.isCollapseMsg = false;
+        return;
+      }
+      this.show.isCollapseMsg = true;
+    },
+    selectMsgFn({ index }) {
+      const user = new User(this.getCurrentUser);
+      if (this.messageMode) {
+        const chat = user.getGroupMessageById(index);
+        this.$store.commit('sandBox/SWITCH_CHAT', chat);
+        this.updateChatTarget(index, true);
+      } else {
+        const chat = user.getFriendMessageById(index);
+        this.$store.commit('sandBox/SWITCH_CHAT', chat);
+        this.updateChatTarget(index, false);
+      }
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser'])
+    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser']),
+    isAdded() {
+      const curUser = this.getCurrentUser;
+      const type = this.searchDialog.index;
+      let isAdded;
+      if (type === 0) {
+        isAdded = curUser.friends.some((friend) => friend.id === `user-${this.searchDialog.input}`);
+      } else if (type === 1) {
+        isAdded = curUser.groups.some((group) => group.id === `group-${this.searchDialog.input}`);
+      }
+      return isAdded;
+    }
+  },
+  watch: {
+    'screen.width': {
+      handler(w) {
+        if (w < 768) {
+          this.show.isCollapseMsg = false;
+        } else {
+          this.show.isCollapseMsg = true;
+        }
+      }
+    }
   },
   mounted() {
     // console.log(this.getAllUser);
     // console.log(this.getCurrentUser);
+    this.admin = new Administrators();
   }
 };
 </script>
@@ -524,6 +648,7 @@ export default {
     width: 60px;
     background-color: #f2f2f2;
     border-bottom: 2px solid #e9e9e9;
+    z-index: 2;
 
     .k-chat-header {
       position: sticky;
@@ -681,16 +806,18 @@ export default {
   }
   .pps-form {
     box-sizing: border-box;
-    padding-left: 20px;
-    .user-input-label {
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
     .user-sex-wrapper {
+      display: flex;
+      align-items: center;
       height: 38px;
       line-height: 38px;
-      margin-top: 10px;
-      margin-bottom: 5px;
+      margin: 20px 0;
+
+      .sex-text-label {
+        width: 4rem;
+        text-align: right;
+        margin-right: 15px;
+      }
     }
   }
   .add-friend-dialog {
@@ -747,5 +874,25 @@ export default {
 
 .empty {
   height: calc(var(--k-main-height) - var(--k-footer-height));
+}
+.avatar-img {
+  border-radius: 50%;
+}
+
+// 过渡
+.v-enter,
+.v-leave-to {
+  width: 0;
+}
+.v-enter-active,
+.v-leave-active {
+  transition: width 0.3s ease-in-out;
+}
+.v-enter-to,
+.v-leave {
+  width: 241px;
+}
+.isTransparent {
+  z-index: -111;
 }
 </style>

@@ -11,9 +11,9 @@ const ROLE_FRIEND = 'friend';
  * @param {*} param0 { numId：用户id, name：用户名, age：年龄, sex：性别, avatar：头像 }
  */
 export default class User {
-  constructor({ numId, name, age, sex, avatar }) {
+  constructor({ numId, name, age, sex, avatar, id }) {
     this.name = name;
-    this.id = `user-${numId}`;
+    this.id = id || `user-${numId}`;
     this.numId = numId;
     this.age = age;
     this.sex = sex;
@@ -47,7 +47,11 @@ export default class User {
    * @returns 群组列表
    */
   getAllGroups() {
-    return this.self().groups;
+    const g_list = this.self().groups.map(({ id }) => id);
+    const all_groups = g_list.map((gid) => {
+      return store.getters['sandBox/getGroupById'](gid);
+    });
+    return all_groups;
   }
 
   /**
@@ -56,9 +60,8 @@ export default class User {
    * @returns 群组信息
    */
   getGroupById(groupId) {
-    const group = this.self().groups;
-    if (!group.length) return false;
-    return group.find((group) => group.id === groupId);
+    const hasGroup = this.self().groups.some(({ id }) => id === groupId);
+    return hasGroup || store.getters['sandBox/getGroupById'](groupId);
   }
 
   /**
@@ -210,15 +213,20 @@ export default class User {
   sendMessageToFriend({ id, content }) {
     if (!this.self().friends.some((friend) => friend.id === id)) return false;
     const msgId = nanoid();
-    const message = { id: msgId, role: ROLE_SELF, content };
+    const timestamp = Date.now();
+    const message = { id: msgId, role: ROLE_SELF, receiver: id, content, date: timestamp };
     const msgOption = { sender: this.id, receiver: id, message };
     store.commit('sandBox/SEND_PRIVATE_MESSAGE', msgOption);
-    this.receiveFriendMessage({ id, content, msgId });
+    this.receiveFriendMessage({ id, content, msgId, timestamp });
     return true;
   }
 
-  receiveFriendMessage({ id, content, msgId }) {
-    const message = { id: msgId, role: ROLE_FRIEND, content };
+  /**
+   * 接收私聊消息
+   * @param {*} param0 {id, content, msgId, timestamp}
+   */
+  receiveFriendMessage({ id, content, msgId, timestamp }) {
+    const message = { id: msgId, role: ROLE_FRIEND, content, date: timestamp, sender: this.id };
     const msgOption = { sender: id, receiver: this.id, message };
     store.commit('sandBox/SEND_PRIVATE_MESSAGE', msgOption);
   }
@@ -230,8 +238,8 @@ export default class User {
    */
   deleteFriendMessage(fid, msgId) {
     if (!this.self().friends.some((friend) => friend.id === fid)) return false;
-    store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: this.id, receiver: fid, msgId });
     store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: fid, receiver: this.id, msgId });
+    store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: this.id, receiver: fid, msgId });
     return true;
   }
 
@@ -247,7 +255,7 @@ export default class User {
     const groupMsg = store.getters['sandBox/getGroupMessage'](id);
     const hasMute = groupMsg.isMute || groupMsg.muteMembers.includes(this.id);
     if (!this._isAdmin(id) && hasMute) return false;
-    const message = { id: nanoid(), role: this.id, content };
+    const message = { id: nanoid(), role: this.id, isGroup: true, content, date: new Date() };
     store.commit('sandBox/SEND_GROUP_MESSAGE', { gid: id, message });
     return true;
   }
@@ -305,16 +313,19 @@ export default class User {
 
   /**
    * 获取好友消息
+   * @param {*} friendId 好友id
    */
-  getFriendMessage() {
-    return store.getters['sandBox/getPrivateMessage'](this.id);
+  getFriendMessageById(friendId) {
+    const allMsg = store.getters['sandBox/getPrivateMessage'](this.id);
+    const friendMsg = allMsg[friendId] || [];
+    return friendMsg;
   }
 
   /**
    * 获取群消息
    */
-  getGroupMessage() {
-    return store.getters['sandBox/getGroupMessage'](this.id);
+  getGroupMessageById(groupId) {
+    return store.getters['sandBox/getGroupMessage'](groupId);
   }
 
   // 私有方法

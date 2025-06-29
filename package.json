@@ -3,7 +3,7 @@
   "version": "1.4.4",
   "private": true,
   "scripts": {
-    "s": "vue-cli-service serve",
+    "s": "vue-cli-service serve --port 8081",
     "b": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },

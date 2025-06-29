@@ -1,19 +1,19 @@
 <template>
-  <k-container class="k-container" direction="horizontal" v-resize-ob="screenResize">
+  <k-container class="k-container k-sb-main" v-resize-ob:300="screenResize" direction="horizontal">
     <!-- 好友、群聊列表 -->
-    <sb-left-aside></sb-left-aside>
+    <sb-left-aside :screen="screen" :updateChatTarget="updateChatTargetFn"></sb-left-aside>
     <k-container v-show="show.isShowChatBox" direction="vertical" style="width: 100%">
       <!-- 聊天窗口页头 -->
-      <header class="k-chat-header" v-show="chatTarget">
+      <header class="k-chat-header" v-show="show.isShowChatBox">
         <gray-button class="icon-btn" v-show="1">
           <pps-icon icon="pps-icon-side-show"></pps-icon>
         </gray-button>
         <div class="k-chat-header-content">
-          <span class="k-chat-header-title">{{ chatTarget }}</span>
+          <span class="k-chat-header-title">{{ chatTarget.id }}</span>
         </div>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
-        <sb-chat-main></sb-chat-main>
+        <sb-chat-main :chatTarget="chatTarget"></sb-chat-main>
         <!-- 右侧、群聊成员 -->
         <sb-right-aside v-show="show.isShowGroups"></sb-right-aside>
       </k-container>
@@ -40,8 +40,12 @@ export default {
         isShowGroups: true,
         isShowChatBox: true
       },
+      screen: { width: 0, height: 0 },
       admin: null,
-      chatTarget: null
+      chatTarget: {
+        id: '',
+        isGroup: false
+      }
     };
   },
   methods: {
@@ -99,9 +103,14 @@ export default {
       new User({ id, name, age, sex });
     },
     screenResize(x, y) {
-      // const width = Math.floor(x);
-      // const height = Math.floor(y);
-      // console.log(width, height);
+      const width = Math.floor(x);
+      const height = Math.floor(y);
+      this.screen.width = width;
+      this.screen.height = height;
+    },
+    updateChatTargetFn(id, isGroup) {
+      this.chatTarget.id = id;
+      this.chatTarget.isGroup = isGroup;
     }
   },
   computed: {
@@ -113,7 +122,7 @@ export default {
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .k-container ::v-deep aside,
 .k-container ::v-deep section,
 .k-container ::v-deep header,
@@ -121,10 +130,13 @@ export default {
   box-sizing: border-box;
 }
 .k-container {
-  // height: 100%;
   --sb-header-height: 60px;
 }
-.k-chat-main{
+.k-sb-main {
+  // height: 100%;
+  // flex: 1;
+}
+.k-chat-main {
   flex-grow: 1;
 }
 .k-container ::v-deep .k-chat-header {

@@ -5,6 +5,7 @@ export default {
   state: {
     users: [],
     currentUser: {},
+    currentMsg: null,
     groups: [],
     privateMsg: {},
     groupMsg: {}

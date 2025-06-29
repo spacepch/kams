@@ -8,6 +8,7 @@
         </header>
         <div class="pps-dialog-content">
           <slot name="content">
+            --
             <p>{{ content }}</p>
           </slot>
         </div>
@@ -25,41 +26,6 @@
 <script>
 export default {
   name: 'ppsDialog',
-  props: {
-    show: {
-      type: Boolean,
-      default() {
-        return false;
-      }
-    },
-    handleClick: {
-      type: Function
-    },
-    content: {
-      type: String,
-      default() {
-        return '警告';
-      }
-    },
-    title: {
-      type: String,
-      default() {
-        return '提示';
-      }
-    },
-    afterShow: {
-      type: Function,
-      default() {
-        return false;
-      }
-    },
-    callback: {
-      type: Function,
-      default() {
-        return false;
-      }
-    }
-  },
   data() {
     return {
       dialogFlag: false,
@@ -127,6 +93,41 @@ export default {
   mounted() {
     if (this.show) {
       this.showMessageFn();
+    }
+  },
+  props: {
+    show: {
+      type: Boolean,
+      default() {
+        return false;
+      }
+    },
+    handleClick: {
+      type: Function
+    },
+    content: {
+      type: String,
+      default() {
+        return '警告';
+      }
+    },
+    title: {
+      type: String,
+      default() {
+        return '提示';
+      }
+    },
+    afterShow: {
+      type: Function,
+      default() {
+        return false;
+      }
+    },
+    callback: {
+      type: Function,
+      default() {
+        return false;
+      }
     }
   }
 };

@@ -12,7 +12,7 @@
       class="k-menu-item"
       :class="[{ className: className }, direction]"
       :style="[itemStyle, { height: `${height}px`, minHeight: `${height}px` }]"
-      v-on="$listeners"
+
       @mouseenter="onmouseenterFn"
       @mouseleave="onMouseLeaveFn"
       @click="handleClickFn"
@@ -85,12 +85,12 @@ export default {
     onMouseLeaveFn() {
       if (this.activeShape.includes('background') && this.active) return;
       this.$el.style.backgroundColor = '';
-
       this.handleTooltipFn(false);
     },
     handleClickFn() {
       this.root.$bus.$emit('changeRoute', this.index);
       this.$emit('click', this);
+      this.root.$emit('select', this);
     },
     handleTooltipFn(isShow) {
       this.$refs.tooltip.showPopper = isShow;

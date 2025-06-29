@@ -55,7 +55,7 @@ export default class Administrators {
       const hasUser = store.getters['sandBox/getUserById'](mid);
       if (!hasUser) return console.log(`用户${mid}不存在`);
       const role = mid === lord ? 'lord' : 'member';
-      hasUser.groups.push({ id: gid, role, avatar: group.avatar, name });
+      hasUser.groups.push({ id: gid, name });
       group.addMember({ id: member.id, role });
     });
     const lorder = store.getters['sandBox/getUserById'](lord);

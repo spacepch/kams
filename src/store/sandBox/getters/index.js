@@ -35,5 +35,10 @@ export default {
   // 获取当前用户
   getCurrentUser: (state) => {
     return state.currentUser;
+  },
+
+  // 获取当前消息列表
+  getCurrentMsg: (state) => {
+    return state.currentMsg;
   }
 };

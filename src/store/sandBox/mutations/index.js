@@ -70,17 +70,17 @@ export default {
 
   SEND_PRIVATE_MESSAGE(state, { sender, receiver, message }) {
     const senderMsg = state.privateMsg[sender];
+    Reflect.has(senderMsg, receiver) || (senderMsg[receiver] = []); // 创建接收者的消息列表
     const friendMsg = senderMsg[receiver];
-    if (Reflect.has(senderMsg, receiver)) friendMsg.push(message);
-    else senderMsg[receiver] = [message];
+    friendMsg.push(message);
   },
   DEL_PRIVATE_MESSAGE(state, { sender, receiver, msgId = false }) {
     if (!msgId) {
       delete state.privateMsg[sender][receiver];
       return;
     }
-    const messages = state.privateMsg[sender][receiver].filter((msg) => msg.id !== msgId);
-    state.privateMsg[sender][receiver] = messages;
+    const index = state.privateMsg[sender][receiver].findIndex((msg) => msg.id === msgId);
+    state.privateMsg[sender][receiver].splice(index, 1);
   },
   CREATE_GROUP_MESSAGE(state, group) {
     if (Reflect.has(state.groupMsg, group.id)) {
@@ -96,17 +96,17 @@ export default {
     };
   },
   SEND_GROUP_MESSAGE(state, { gid, message }) {
-    if (!state.groupMsg[gid].messages) state.groupMsg[gid].messages = [message];
+    if (!state.groupMsg[gid].messages) state.groupMsg[gid].messages = [];
     state.groupMsg[gid].messages.push(message);
   },
-  DEL_GROUP_MESSAGE(state, { gid, msgId = false }) {
+  DEL_GROUP_MESSAGE(state, { id, msgId = false }) {
     if (!msgId) {
-      delete state.groupMsg[gid];
+      delete state.groupMsg[id];
       return;
     }
-    if (!state.groupMsg[gid].messages) return false;
-    const message = state.groupMsg[gid].messages.filter((msg) => msg.id !== msgId);
-    state.groupMsg[gid].messages = message;
+    if (!state.groupMsg[id].messages) return false;
+    const index = state.groupMsg[id].messages.findIndex((msg) => msg.id === msgId);
+    state.groupMsg[id].messages.splice(index, 1);
   },
   HANDLE_MUTE_GROUP(state, { gid, isMute }) {
     state.groupMsg[gid].isMute = isMute;
@@ -122,13 +122,19 @@ export default {
     }
   },
   CLEAR_USER_MESSAGE(state, id) {
-    if (id) { delete state.privateMsg[id]; return; }
+    if (id) {
+      delete state.privateMsg[id];
+      return;
+    }
     Object.keys(state.privateMsg).forEach((key) => {
       state.privateMsg[key] = {};
     });
   },
   CLEAR_GROUP_MESSAGE(state, id) {
-    if (id) { delete state.groupMsg[id]; return; }
+    if (id) {
+      delete state.groupMsg[id];
+      return;
+    }
     Object.keys(state.groupMsg).forEach((key) => {
       state.groupMsg[key].messages = [];
     });
@@ -138,5 +144,14 @@ export default {
   SWITCH_USER(state, id) {
     if (!id && state.currentUser === null) state.currentUser = state.users[0];
     if (id) state.currentUser = state.users.find((user) => user.id === id);
+  },
+
+  // 切换对话窗口
+  SWITCH_CHAT(state, msg = null) {
+    if (msg) {
+      state.currentMsg = msg;
+    } else {
+      state.currentMsg = null;
+    }
   }
 };
