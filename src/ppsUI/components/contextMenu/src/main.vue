@@ -4,6 +4,7 @@
     <transition name="pps-context">
       <div
         ref="menu"
+        v-if="isShowMenus"
         v-show="showContextMenu"
         class="pps-context-menu_wrapper"
         :style="{ left: x + 'px', top: y + 'px' }"
@@ -32,7 +33,6 @@
 </template>
 
 <script>
-
 export default {
   name: 'pps-context-menu',
   directives: {
@@ -87,6 +87,7 @@ export default {
       this.showContextMenu = true;
     },
     setPosition() {
+      if (!this.isShowMenus) return;
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       const crect = this.$refs.container.getBoundingClientRect();
@@ -115,6 +116,11 @@ export default {
       this.$refs.container.addEventListener('contextmenu', this.openMenu, false);
       window.addEventListener('contextmenu', this.closeMenu, true);
       this.setPosition();
+    }
+  },
+  computed: {
+    isShowMenus() {
+      return this.menus.length || this.$slots.prepend || this.$slots.append;
     }
   },
   mounted() {

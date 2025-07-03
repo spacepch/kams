@@ -42,7 +42,7 @@
             >
               <template slot="prepend">
                 <el-tooltip class="item" effect="dark" content="账户信息" placement="top">
-                  <pps-icon icon="pps-icon-account" @click="show.userInfo = true"></pps-icon>
+                  <pps-icon icon="pps-icon-account" @click="showUserDetailFn(user)"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="好友" placement="top">
                   <pps-icon icon="pps-icon-contact" @click="show.friendList = true"></pps-icon>
@@ -307,24 +307,24 @@
     <pps-dialog :show.sync="show.userInfo" title="用户信息">
       <template v-slot:content>
         <div class="user-info-wrapper">
-          <pps-avatar :src="getCurrentUser.avatar" size="40"></pps-avatar>
+          <pps-avatar :src="userDetailDate.avatar" size="40"></pps-avatar>
         </div>
         <el-descriptions class="margin-top" :column="2" border>
           <el-descriptions-item>
             <template slot="label">昵称</template>
-            {{ getCurrentUser.name }}
+            {{ userDetailDate.name }}
           </el-descriptions-item>
           <el-descriptions-item>
             <template slot="label">ID</template>
-            {{ getCurrentUser.id }}
+            {{ userDetailDate.id }}
           </el-descriptions-item>
           <el-descriptions-item>
             <template slot="label">年龄</template>
-            {{ getCurrentUser.age }}
+            {{ userDetailDate.age }}
           </el-descriptions-item>
           <el-descriptions-item>
             <template slot="label">性别</template>
-            {{ getCurrentUser.sex }}
+            {{ userDetailDate.sex }}
           </el-descriptions-item>
         </el-descriptions>
       </template>
@@ -387,7 +387,8 @@ export default {
         index: 0,
         input: ''
       },
-      tableData: []
+      tableData: [],
+      userDetailDate: {}
     };
   },
   props: {
@@ -596,15 +597,22 @@ export default {
     },
     selectMsgFn({ index }) {
       const user = new User(this.getCurrentUser);
+      let chat;
       if (this.messageMode) {
-        const chat = user.getGroupMessageById(index);
+        chat = user.getGroupMessageById(index);
         this.$store.commit('sandBox/SWITCH_CHAT', chat);
         this.updateChatTarget(index, true);
       } else {
-        const chat = user.getFriendMessageById(index);
+        chat = user.getFriendMessageById(index);
         this.$store.commit('sandBox/SWITCH_CHAT', chat);
         this.updateChatTarget(index, false);
       }
+      this.$emit('switchMsg', chat)
+    },
+    showUserDetailFn(userInfo) {
+      this.userDetailDate = {};
+      Object.assign(this.userDetailDate, userInfo);
+      this.show.userInfo = true;
     }
   },
   computed: {

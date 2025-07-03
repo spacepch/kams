@@ -61,7 +61,7 @@ export default class User {
    */
   getGroupById(groupId) {
     const hasGroup = this.self().groups.some(({ id }) => id === groupId);
-    return hasGroup || store.getters['sandBox/getGroupById'](groupId);
+    return hasGroup && store.getters['sandBox/getGroupById'](groupId);
   }
 
   /**
@@ -197,8 +197,10 @@ export default class User {
     const group = store.getters['sandBox/getGroupById'](groupId);
     const exp = store.getters['sandBox/getUserById'](expellee);
     if (!group || !exp || expellee === this.id) return false;
-    const isLord = group.lord === this.id;
-    if (!isLord) return false;
+    if (!this._isAdmin(groupId)) return false;
+    if (group.admins.some((ad) => ad === expellee) || group.lord === expellee) return false;
+    // const isLord = group.lord === this.id;
+    // if (!isLord) return false;
     exp.groups = exp.groups.filter((g) => g.id !== groupId);
     group.members = group.members.filter((member) => member.id !== exp.id);
     return true;
@@ -247,7 +249,7 @@ export default class User {
    * 发送群聊消息
    * @param {*} param0 { id：群组id, content：消息内容 }
    */
-  sendMessageToGroup({ id, content }) {
+  sendMessageToGroup({ id, content, replyMsg = null }) {
     const group = store.getters['sandBox/getGroupById'](id);
     if (!group) return false;
     const hasMember = group.members.some((member) => member.id === this.id);
@@ -255,7 +257,14 @@ export default class User {
     const groupMsg = store.getters['sandBox/getGroupMessage'](id);
     const hasMute = groupMsg.isMute || groupMsg.muteMembers.includes(this.id);
     if (!this._isAdmin(id) && hasMute) return false;
-    const message = { id: nanoid(), role: this.id, isGroup: true, content, date: new Date() };
+    const message = {
+      id: nanoid(),
+      role: this.id,
+      isGroup: true,
+      content,
+      date: new Date(),
+      replyMsg
+    };
     store.commit('sandBox/SEND_GROUP_MESSAGE', { gid: id, message });
     return true;
   }
@@ -308,6 +317,21 @@ export default class User {
   unmuteMemberById(gid, mid) {
     if (!this._isAdmin(gid)) return false;
     store.commit('sandBox/UNMUTE_MEMBER', { gid, mid });
+    return true;
+  }
+
+  /**
+   * 设置群管理员
+   * @param {*} param0 { gid：群组id, mid：成员id }
+   */
+  setGroupAdmin({ gid, mid }) {
+    if (!this._isAdmin(gid)) return false;
+    if (this.self().groups.role === 'lord') return false;
+    const group = this.getGroupById(gid);
+    if (!group.members.some(({ id }) => id === mid)) return false;
+    if (group.lord === mid) return false;
+    if (group.admins.some((id) => id === mid)) return false;
+    store.commit('sandBox/SET_GROUP_ADMIN', { gid, mid });
     return true;
   }
 
@@ -370,7 +394,8 @@ export default class User {
    */
   _isAdmin(gid) {
     const group = store.getters['sandBox/getGroupById'](gid);
-    const isAdmin = group.admins.includes(this.self().id) || group.lord === this.self().id;
+    const id = this.self().id;
+    const isAdmin = group.admins.some((ad) => ad === id) || group.lord === id;
     return isAdmin;
   }
 }

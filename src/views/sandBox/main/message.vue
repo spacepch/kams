@@ -10,8 +10,16 @@
       <pps-context-menu @select="testContextMenuFn" :menus="getTextMenus">
         <div slot="content">
           <div class="container">
-            <div class="nickname">{{ getUserNicknameFn }}</div>
-            <div class="content">{{ message.content }}</div>
+            <div class="nickname">
+              <span v-if="chatTarget.isGroup" :class="groupRole" class="groupRole">
+                {{ tranRoleFn() }}
+              </span>
+              <span>{{ getUserNickname }}</span>
+            </div>
+            <div class="content">{{ message.content || '\u00A0' }}</div>
+            <div v-if="message.replyMsg" class="reply">
+              {{ message.replyMsg.name }}：{{ message.replyMsg.content }}
+            </div>
           </div>
         </div>
       </pps-context-menu>
@@ -21,14 +29,14 @@
 
 <script>
 import Administrators from '@/utils/sandBox/administrators';
-// eslint-disable-next-line no-unused-vars
 import User from '@/utils/sandBox/user';
 import { mapGetters } from 'vuex';
 export default {
   name: 'k-sb-message',
   data() {
     return {
-      admin: new Administrators()
+      admin: new Administrators(),
+      groupRole: null
     };
   },
   props: {
@@ -74,16 +82,31 @@ export default {
           console.log(res);
         }
       } else if (task === 1) {
-        console.log('回复消息');
+        this.$emit('replyMsg', this.message);
       }
     },
-    avatarContextMenuFn(menus) {
-      console.log(menus);
+    avatarContextMenuFn({ label, task }) {
+      if (task === 0) {
+        const user = this.admin.getUserById(this.message.role);
+        // console.log(user);
+        this.$emit('showUserDetail', user);
+      } else if (task === 1) {
+        this.$emit('mentionMember', this.message.role);
+      }
+      console.log(label, task);
+    },
+    tranRoleFn() {
+      const memberList = this.admin.getGroupById(this.chatTarget.id).members;
+      const role = memberList.find((m) => m.id === this.message.role).role;
+      this.groupRole = role;
+      if (role === 'lord') return '群主';
+      if (role === 'admin') return '管理员';
+      return '';
     }
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
-    getUserNicknameFn() {
+    getUserNickname() {
       if (this.message.role === 'self') {
         return this.getCurrentUser.name;
       } else if (this.message.role === 'friend') {
@@ -105,6 +128,7 @@ export default {
     getAvatarMenus() {
       const menus_normal = [];
       if (this.chatTarget.isGroup) {
+        const group = this.admin.getGroupById(this.chatTarget.id);
         menus_normal.push({ label: '查看资料', task: 0 });
         // const g = this.admin.getGroupById(this.getCurrentMsg.id)
         // console.log(g);
@@ -112,15 +136,24 @@ export default {
         if (!this.isSelf) {
           menus_normal.push({ label: '@ TA', task: 1 });
           menus_normal.push({ label: '添加好友', task: 2 });
-          const curUser = new User(this.getCurrentUser);
-          console.log(curUser._isAdmin(this.chatTarget.id));
+
+          const isAdmin = new User(this.getCurrentUser)._isAdmin(this.chatTarget.id);
+          if (isAdmin) {
+            if (this.message.role !== group.lord) {
+              menus_normal.push({ label: '设置禁言', task: 3 });
+              menus_normal.push({ label: '移出本群', task: 4 });
+            } else {
+              //
+            }
+          }
         }
       }
       return menus_normal;
     }
   },
   mounted() {
-    // console.log('mounted', this.message);
+    console.log('mounted', this.message);
+    this.tranRoleFn();
   }
 };
 </script>
@@ -152,6 +185,25 @@ export default {
       .nickname {
         color: #7a7a7a;
         user-select: none;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+
+        .groupRole {
+          font-size: 11px;
+          padding: 2px;
+          line-height: 1rem;
+          border-radius: 4px;
+          margin-inline-end: 4px;
+        }
+        .admin {
+          background: var(--sb-admin-bg);
+          color: var(--sb-admin-color);
+        }
+        .lord {
+          background: var(--sb-lord-bg);
+          color: var(--sb-lord-color);
+        }
       }
       .content {
         width: fit-content;
@@ -159,6 +211,16 @@ export default {
         padding: 8px;
         text-wrap-mode: wrap;
         border-radius: 8px;
+        margin-top: 4px;
+      }
+      .reply {
+        width: fit-content;
+        font-size: 12px;
+        border-radius: 4px;
+        padding: 6px 8px;
+        margin-top: 4px;
+        background: var(--sb-reply-bg);
+        color: var(--sb-reply-color);
       }
     }
     & + .k-sb-message {
@@ -174,6 +236,7 @@ export default {
     .container {
       .nickname {
         text-align: end;
+        flex-direction: row-reverse;
       }
       .content {
         color: #fff;

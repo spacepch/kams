@@ -139,7 +139,15 @@ export default {
       state.groupMsg[key].messages = [];
     });
   },
+  // 设置群聊管理员
+  SET_GROUP_ADMIN(state, { gid, mid }) {
+    const group = state.groups.find((group) => group.id === gid);
+    group.admins.push(mid);
+    group.members.find((member) => member.id === mid).role = 'admin';
 
+    const user = state.users.find((user) => user.id === mid);
+    user.groups.find((group) => group.id === gid).role = 'admin';
+  },
   // 用户切换
   SWITCH_USER(state, id) {
     if (!id && state.currentUser === null) state.currentUser = state.users[0];

@@ -9,12 +9,25 @@
           :chatTarget="chatTarget"
           :isSelf="isSelfFn(item.role)"
           :key="item.id"
+          @showUserDetail="showUserDetailFn"
+          @mentionMember="mentionMember"
+          @replyMsg="replyMsgFn"
         ></k-sb-message>
+        User类踢出成员方法待完善
       </div>
       <!-- 输入框 -->
       <div class="k-chat-input-box">
-        <div ref="input" class="k-chat-input" role="textbox" contenteditable="true"></div>
-        <!-- <pps-input :content.sync="message" placeholder="请输入内容"></pps-input> -->
+        <div
+          ref="input"
+          class="k-chat-input"
+          :innerHTML="message"
+          @input="inputFn"
+          @click="saveRange"
+          @keyup="saveRange"
+          @blur="lastRange = null"
+          contenteditable="true"
+        ></div>
+        <div v-if="replyMsg" class="reply-chat">{{ replyMsg.name }}：{{ replyMsg.content }}</div>
         <pps-button class="k-chat-send-btn" theme="confirm" @click="sendMessageFn">发送</pps-button>
       </div>
     </template>
@@ -26,6 +39,7 @@
 import LOGO from '@/assets/favicon-gray.svg';
 import { mapGetters } from 'vuex';
 import User from '@/utils/sandBox/user';
+import Administrators from '@/utils/sandBox/administrators';
 import kSbMessage from './message.vue';
 export default {
   name: 'k-chat-main',
@@ -34,7 +48,10 @@ export default {
     return {
       LOGO,
       messageList: [],
-      message: ''
+      message: '',
+      lastRange: null,
+      replyMsg: null,
+      admin: new Administrators()
     };
   },
   props: {
@@ -49,7 +66,11 @@ export default {
     sendMessageFn() {
       const u = new User(this.getCurrentUser);
       if (this.chatTarget.isGroup) {
-        const res = u.sendMessageToGroup({ id: this.chatTarget.id, content: this.message });
+        const res = u.sendMessageToGroup({
+          id: this.chatTarget.id,
+          content: this.message,
+          replyMsg: this.replyMsg
+        });
         console.log(res);
       } else {
         const res = u.sendMessageToFriend({
@@ -59,6 +80,26 @@ export default {
         // '最近需要快速开发一个微信小程序商城，大家有没有开源的原生小程序前端代码推荐啊。简单的就行。'
         console.log(res);
       }
+      this.message = '';
+      this.$refs.input.innerHTML = '';
+      this.replyMsg = null;
+      this.$refs.input.focus();
+      // this.test();
+    },
+    saveRange() {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        this.lastRange = selection.getRangeAt(0);
+      }
+    },
+    test() {
+      // const res = new User(this.getCurrentUser).setGroupAdmin({
+      //   gid: this.chatTarget.id,
+      //   mid: 'user-1'
+      // });
+      // console.log(res);
+
+      console.log(this.message);
     },
     isSelfFn(sender) {
       if (sender === 'self') {
@@ -72,10 +113,77 @@ export default {
           return false;
         }
       }
+    },
+    showUserDetailFn(userInfo) {
+      this.$emit('showUserDetail', userInfo);
+    },
+    inputFn() {
+      this.message = this.$refs.input.innerText;
+    },
+    mentionMember(user) {
+      const input = this.$refs.input;
+      input.focus();
+
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+
+      let range = null;
+
+      // 如果 lastRange 有效，就用它，否则插到末尾
+      if (this.lastRange && this.isRangeInNode(this.lastRange, input)) {
+        range = this.lastRange;
+      } else {
+        range = document.createRange();
+        range.selectNodeContents(input);
+        range.collapse(false); // false 表示光标放在末尾
+      }
+
+      selection.addRange(range);
+
+      // 插入 mention 节点
+      const mentionNode = document.createElement('button');
+      mentionNode.textContent = `@${user}`;
+      mentionNode.contentEditable = 'false';
+      mentionNode.className = 'pps-button-text pps-button';
+
+      range.deleteContents();
+      range.insertNode(mentionNode);
+
+      // 插入空格
+      const space = document.createTextNode('\u00A0');
+      mentionNode.parentNode.insertBefore(space, mentionNode.nextSibling);
+
+      // 将光标移动到空格后
+      const newRange = document.createRange();
+      newRange.setStartAfter(space);
+      newRange.collapse(true);
+
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+
+      // 更新最后 Range
+      this.lastRange = newRange;
+      this.inputFn();
+    },
+    isRangeInNode(range, node) {
+      if (!range || !node) return false;
+      const container = range.commonAncestorContainer;
+      return node.contains(container);
+    },
+    replyMsgFn(msg) {
+      const name = this.admin.getUserById(msg.role).name;
+      this.replyMsg = { name, ...msg };
+      this.$refs.input.focus();
+      console.log(this.replyMsg);
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg'])
+    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
+    getlord() {
+      const user = new User(this.getCurrentUser);
+      const g = user.getGroupById(this.chatTarget.id);
+      return g.lord;
+    }
   },
   watch: {
     getCurrentMsg(val) {
@@ -89,18 +197,18 @@ export default {
       } else {
         this.messageList = val.messages;
       }
-    },
-    getCurrentUser(val) {
-      //
+      this.replyMsg = null;
+      this.$refs.input.focus();
     }
   },
   mounted() {
     // this.messageList = this
+    // const input = this.$refs.input;
+    // console.log(input);
   },
   updated() {
-    console.log('updated');
     if (this.getCurrentMsg) {
-      this.$refs.input.focus();
+      //
     }
   }
 };
@@ -151,6 +259,15 @@ export default {
       position: absolute;
       right: 10px;
       bottom: 10px;
+    }
+    .reply-chat {
+      width: fit-content;
+      font-size: 12px;
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin-top: 4px;
+      background: var(--sb-reply-bg);
+      color: var(--sb-reply-color);
     }
   }
 }

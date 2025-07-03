@@ -1,5 +1,11 @@
 <template>
-  <k-sb-aside class="aside-group">aside-right</k-sb-aside>
+  <k-sb-aside class="aside-group">
+    <ul>
+      <li v-for="(item, index) in getMemberList" :key="index">
+        {{ item.id }}-{{ item.role }}
+      </li>
+    </ul>
+  </k-sb-aside>
 </template>
 
 <script>
@@ -8,7 +14,29 @@ export default {
   name: 'sb-right-aside',
   components: {
     kSbAside
-  }
+  },
+  props: {
+    group: {
+      type: Object,
+      default() {
+        return null;
+      }
+    }
+  },
+  data() {
+    return {};
+  },
+  methods: {
+    test() {
+      console.log(this.group);
+    }
+  },
+  computed: {
+    getMemberList() {
+      return this.group?.members ?? [];
+    }
+  },
+  mounted() {}
 };
 </script>
 

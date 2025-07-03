@@ -1,7 +1,12 @@
 <template>
   <k-container class="k-container k-sb-main" v-resize-ob:300="screenResize" direction="horizontal">
     <!-- 好友、群聊列表 -->
-    <sb-left-aside :screen="screen" :updateChatTarget="updateChatTargetFn"></sb-left-aside>
+    <sb-left-aside
+      ref="leftAsideRef"
+      :screen="screen"
+      :updateChatTarget="updateChatTargetFn"
+      @switchMsg="switchMsgCallback"
+    ></sb-left-aside>
     <k-container v-show="show.isShowChatBox" direction="vertical" style="width: 100%">
       <!-- 聊天窗口页头 -->
       <header class="k-chat-header" v-show="show.isShowChatBox">
@@ -9,13 +14,13 @@
           <pps-icon icon="pps-icon-side-show"></pps-icon>
         </gray-button>
         <div class="k-chat-header-content">
-          <span class="k-chat-header-title">{{ chatTarget.id }}</span>
+          <h1 class="k-chat-header-title">{{ chatTarget.id }}</h1>
         </div>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
-        <sb-chat-main :chatTarget="chatTarget"></sb-chat-main>
+        <sb-chat-main @showUserDetail="showUserDetailFn" :chatTarget="chatTarget"></sb-chat-main>
         <!-- 右侧、群聊成员 -->
-        <sb-right-aside v-show="show.isShowGroups"></sb-right-aside>
+        <sb-right-aside v-show="chatTarget.isGroup" :group="getGroupMemberList"></sb-right-aside>
       </k-container>
     </k-container>
   </k-container>
@@ -41,7 +46,7 @@ export default {
         isShowChatBox: true
       },
       screen: { width: 0, height: 0 },
-      admin: null,
+      admin: new Administrators(),
       chatTarget: {
         id: '',
         isGroup: false
@@ -111,10 +116,22 @@ export default {
     updateChatTargetFn(id, isGroup) {
       this.chatTarget.id = id;
       this.chatTarget.isGroup = isGroup;
+    },
+    switchMsgCallback(params) {
+      console.log(params);
+    },
+    showUserDetailFn(userInfo) {
+      this.$refs.leftAsideRef.showUserDetailFn(userInfo);
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser'])
+    ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
+    getGroupMemberList() {
+      if (!this.chatTarget.isGroup) return;
+      const gid = this.chatTarget.id;
+      const memberList = this.admin.getGroupById(gid);
+      return memberList;
+    }
   },
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');
@@ -148,7 +165,10 @@ export default {
   border-bottom: 2px solid #e9e9e9;
   background-color: #f2f2f2;
 }
-
+.k-chat-header-title {
+  font-size: 16px;
+  font-style: normal;
+}
 @media screen and (max-width: 1000px) {
   .aside-group {
     display: none;
