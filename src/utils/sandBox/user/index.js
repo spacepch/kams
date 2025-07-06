@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 
 const ROLE_SELF = 'self';
 const ROLE_FRIEND = 'friend';
-
+console.error('User: 创建群聊功能待完善！');
 // 用户类
 /**
  * @description: 用户类
@@ -17,7 +17,7 @@ export default class User {
     this.numId = numId;
     this.age = age;
     this.sex = sex;
-    this.avatar = avatar || `https://k.hotaru.icu/api/data/avatar/${name}`;
+    this.avatar = avatar || `https://picsum.photos/id/${name}/200/200`;
     this.groups = [];
     this.friends = [];
   }
@@ -31,7 +31,8 @@ export default class User {
     if (hasUser) return false;
     store.commit('sandBox/ADD_USER', this);
     store.commit('sandBox/CREATE_PRIVATE_MESSAGE', this.id);
-    return true;
+    this.addFriend('user-super-admin');
+    return this;
   }
 
   /**
@@ -66,25 +67,23 @@ export default class User {
 
   /**
    * 添加好友
-   * @param {*} friendId 好友id
-   * @param {*} friendName 好友名称
+   * @param {*} fid 好友id
    */
   addFriend(fid) {
     const friend = store.getters['sandBox/getUserById'](fid);
     const hasFriend = this.self().friends?.some((friendItem) => friendItem.id === fid);
     if (!friend || hasFriend || fid === this.id) return false;
-    this.self().friends.push({ name: friend.name, id: friend.id, avatar: friend.avatar });
-    const selfMsg = store.getters['sandBox/getPrivateMessage'](this.id);
-    if (!Reflect.has(selfMsg, fid)) store.getters['sandBox/getPrivateMessage'](this.id)[fid] = [];
+    store.commit('sandBox/ADD_FRIEND', { fid, id: this.id });
+    store.commit('sandBox/INIT_PRIVATE_MESSAGE', { id: this.id, fid });
     this.receiveAddFriend(friend);
     return true;
   }
 
   receiveAddFriend(friend) {
-    friend.friends.push({ name: this.self().name, id: this.self().id, avatar: this.self().avatar });
+    store.commit('sandBox/ADD_FRIEND', { fid: this.id, id: friend.id });
     const frdMsg = store.getters['sandBox/getPrivateMessage'](friend.id);
-    if (!Reflect.has(frdMsg, this.self().id)) {
-      store.getters['sandBox/getPrivateMessage'](friend.id)[this.self().id] = [];
+    if (!Reflect.has(frdMsg, this.id)) {
+      store.commit('sandBox/INIT_PRIVATE_MESSAGE', { id: friend.id, fid: this.id });
       console.log(`${this.self().name}已添加到${friend.name}的好友列表中`);
     }
   }
@@ -113,14 +112,25 @@ export default class User {
 
   /**
    * 创建群组
-   * @param {*} param0 { groupId：群组id, groupName：群组名称 }
+   * @param {*} { id: 群组id, name: 群组名称, members: 邀请成员列表, avatar: 群组头像 }
    * @returns 群组对象
    */
-  createGroup({ id, name, avatar }) {
+  createGroup({ id, name, members, avatar }) {
     if (!id && !name) return false;
-    const group = new Group({ name, id, lord: id, avatar });
-    group.addMember({ id: this.id, role: 'lord' });
-    this.groups.push(group);
+    const gid = `group-${id}`;
+    const normalizeMembers = this._memberNormalize(members);
+    const hasGroup = this.getGroupById(gid);
+    if (hasGroup) return false;
+    const group = new Group({ name, id, lord: this.id, avatar }).mount();
+    normalizeMembers.forEach(async (member) => {
+      const mid = member.id;
+      const hasUser = this.getUserById(mid);
+      if (!hasUser) return console.log(`用户${mid}不存在`);
+      const role = mid === this.id ? 'lord' : 'member';
+      group.addMember({ uid: member.id, role });
+    });
+    group.addMember({ uid: this.id, role: 'lord' });
+    group.addMember({ uid: 'user-super-admin', role: 'super-admin' });
     return group;
   }
 
@@ -147,12 +157,12 @@ export default class User {
    * @param {*} gid 群组id
    */
   addGroupById(gid) {
-    const group = store.getters['sandBox/getGroupById'](gid);
-    if (!group) return false;
-    const hasMember = group.members.some((member) => member.id === this.id);
+    const groupData = store.getters['sandBox/getGroupById'](gid);
+    if (!groupData) return false;
+    const group = new Group(groupData);
+    const hasMember = group.getAllMember().some((member) => member.id === this.id);
     if (hasMember) return false;
-    group.members.push({ id: this.id, role: 'member' });
-    this.self().groups.push({ id: gid, role: 'member' });
+    group.addMember({ uid: this.id, role: 'member' });
     return true;
   }
 
@@ -395,7 +405,8 @@ export default class User {
   _isAdmin(gid) {
     const group = store.getters['sandBox/getGroupById'](gid);
     const id = this.self().id;
-    const isAdmin = group.admins.some((ad) => ad === id) || group.lord === id;
+    const isAdmin =
+      group.admins.some((ad) => ad === id) || group.lord === id || this.self().isSuper;
     return isAdmin;
   }
 }

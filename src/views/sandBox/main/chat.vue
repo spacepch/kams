@@ -24,11 +24,13 @@
           @input="inputFn"
           @click="saveRange"
           @keyup="saveRange"
+          @keypress.enter="sendMessageFn"
           @blur="lastRange = null"
           contenteditable="true"
         ></div>
         <div v-if="replyMsg" class="reply-chat">{{ replyMsg.name }}：{{ replyMsg.content }}</div>
         <pps-button class="k-chat-send-btn" theme="confirm" @click="sendMessageFn">发送</pps-button>
+        <button @click="setGroupAdminFn">设置管理员</button>
       </div>
     </template>
     <el-empty v-else description="" style="height: 100%" :image="LOGO"></el-empty>
@@ -63,7 +65,8 @@ export default {
     }
   },
   methods: {
-    sendMessageFn() {
+    sendMessageFn(e) {
+      if (e.key === 'Enter') e.preventDefault();
       const u = new User(this.getCurrentUser);
       if (this.chatTarget.isGroup) {
         const res = u.sendMessageToGroup({
@@ -92,14 +95,12 @@ export default {
         this.lastRange = selection.getRangeAt(0);
       }
     },
-    test() {
-      // const res = new User(this.getCurrentUser).setGroupAdmin({
-      //   gid: this.chatTarget.id,
-      //   mid: 'user-1'
-      // });
-      // console.log(res);
-
-      console.log(this.message);
+    setGroupAdminFn() {
+      const res = new User(this.getCurrentUser).setGroupAdmin({
+        gid: this.chatTarget.id,
+        mid: 'user-1'
+      });
+      console.log(res);
     },
     isSelfFn(sender) {
       if (sender === 'self') {
@@ -198,19 +199,18 @@ export default {
         this.messageList = val.messages;
       }
       this.replyMsg = null;
-      this.$refs.input.focus();
+      if (this.$refs.input) {
+        this.$refs.input.focus();
+      }
     }
   },
   mounted() {
     // this.messageList = this
-    // const input = this.$refs.input;
-    // console.log(input);
-  },
-  updated() {
-    if (this.getCurrentMsg) {
-      //
+    if (this.$refs.input) {
+      this.$refs.input.focus();
     }
-  }
+  },
+  updated() {}
 };
 </script>
 

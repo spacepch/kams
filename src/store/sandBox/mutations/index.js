@@ -1,3 +1,4 @@
+import Vue from 'vue';
 export default {
   // 用户
   ADD_USER(state, user) {
@@ -8,6 +9,23 @@ export default {
       state.users.push(user);
       return true;
     }
+  },
+  ADD_FRIEND(state, { fid, id }) {
+    const friend = state.users.find((u) => u.id === fid);
+    const user = state.users.find((u) => u.id === id);
+    if (!user) return false;
+    // 检查是否已是好友
+    const isAlreadyFriend = user.friends.some((f) => f.id === fid);
+    if (isAlreadyFriend) return false;
+    // 添加好友
+    Vue.set(user, 'friends', [
+      ...(user.friends || []),
+      {
+        id: friend.id,
+        name: friend.name,
+        avatar: friend.avatar
+      }
+    ]);
   },
   UPDATE_USER(state, user) {
     console.log('需要被更新的用户', user);
@@ -57,6 +75,25 @@ export default {
   CLEAR_GROUPS(state) {
     state.groups = [];
   },
+  // 设置群聊管理员
+  SET_GROUP_ADMIN(state, { gid, mid }) {
+    const group = state.groups.find((group) => group.id === gid);
+    group.admins.push(mid);
+    group.members.find((member) => member.id === mid).role = 'admin';
+
+    const user = state.users.find((user) => user.id === mid);
+    user.groups.find((group) => group.id === gid).role = 'admin';
+  },
+  ADD_MEMBER(state, { gid, uid, role }) {
+    const group = state.groups.find((group) => group.id === gid);
+    const member = state.users.find((user) => user.id === uid);
+    if (!group || !member) {
+      console.error('群组不存在或用户不存在', gid, uid);
+      return false;
+    }
+    group.members.push({ id: uid, role });
+    member.groups.push({ id: gid, role });
+  },
 
   // 消息
   CREATE_PRIVATE_MESSAGE(state, id) {
@@ -67,12 +104,15 @@ export default {
     }
     state.privateMsg[id] = {};
   },
-
+  INIT_PRIVATE_MESSAGE(state, { id, fid }) {
+    const selfMsg = state.privateMsg[id];
+    if (Reflect.has(selfMsg, fid)) return false;
+    Vue.set(selfMsg, fid, []);
+  },
   SEND_PRIVATE_MESSAGE(state, { sender, receiver, message }) {
     const senderMsg = state.privateMsg[sender];
     Reflect.has(senderMsg, receiver) || (senderMsg[receiver] = []); // 创建接收者的消息列表
-    const friendMsg = senderMsg[receiver];
-    friendMsg.push(message);
+    senderMsg[receiver].push(message);
   },
   DEL_PRIVATE_MESSAGE(state, { sender, receiver, msgId = false }) {
     if (!msgId) {
@@ -139,15 +179,7 @@ export default {
       state.groupMsg[key].messages = [];
     });
   },
-  // 设置群聊管理员
-  SET_GROUP_ADMIN(state, { gid, mid }) {
-    const group = state.groups.find((group) => group.id === gid);
-    group.admins.push(mid);
-    group.members.find((member) => member.id === mid).role = 'admin';
 
-    const user = state.users.find((user) => user.id === mid);
-    user.groups.find((group) => group.id === gid).role = 'admin';
-  },
   // 用户切换
   SWITCH_USER(state, id) {
     if (!id && state.currentUser === null) state.currentUser = state.users[0];

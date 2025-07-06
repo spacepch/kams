@@ -15,16 +15,20 @@ export default class Group {
     this.avatar = avatar || `https://k.hotaru.icu/api/data/avatar/${name}`;
     this.admins = [];
     this.members = [];
-    store.commit('sandBox/ADD_GROUP', this);
-    store.commit('sandBox/CREATE_GROUP_MESSAGE', this);
   }
 
-  getAllMembers() {
+  mount() {
+    store.commit('sandBox/ADD_GROUP', this);
+    store.commit('sandBox/CREATE_GROUP_MESSAGE', this);
+    return this;
+  }
+
+  getAllMember() {
     return this.self().members;
   }
 
-  addMember(user) {
-    this.self().members.push(user);
+  addMember({ uid, role }) {
+    store.commit('sandBox/ADD_MEMBER', { gid: this.id, uid, role });
   }
 
   removeMember(id) {

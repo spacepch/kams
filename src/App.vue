@@ -13,6 +13,8 @@
 <script>
 export default {
   name: 'App',
-  methods: {}
+  mounted() {
+    this.$dialog({ title: '注意', content: '版本更新后请清除localStorage数据！' })
+  }
 };
 </script>

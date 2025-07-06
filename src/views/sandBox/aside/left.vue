@@ -352,7 +352,7 @@ export default {
   data() {
     return {
       users: [],
-      admin: null,
+      admin: new Administrators(),
       ADD_USER_IMG,
       REMOVE_USER,
       messageMode: 0,
@@ -456,7 +456,7 @@ export default {
         lord: this.getCurrentUser.id,
         avatar: this.createGroup.avatar,
         members: this.createGroup.checkList
-      });
+      }).mount();
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊创建失败！信息不完整或已存在' })
           .then((action) => {
@@ -607,7 +607,7 @@ export default {
         this.$store.commit('sandBox/SWITCH_CHAT', chat);
         this.updateChatTarget(index, false);
       }
-      this.$emit('switchMsg', chat)
+      this.$emit('switchMsg', chat);
     },
     showUserDetailFn(userInfo) {
       this.userDetailDate = {};
@@ -643,7 +643,6 @@ export default {
   mounted() {
     // console.log(this.getAllUser);
     // console.log(this.getCurrentUser);
-    this.admin = new Administrators();
   }
 };
 </script>
@@ -830,6 +829,7 @@ export default {
   }
   .add-friend-dialog {
     height: 100%;
+    width: fit-content;
     @media screen and (max-width: 700px) {
       width: 100%;
     }

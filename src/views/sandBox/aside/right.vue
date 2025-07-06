@@ -5,6 +5,7 @@
         {{ item.id }}-{{ item.role }}
       </li>
     </ul>
+    <button @click="test">ttt</button>
   </k-sb-aside>
 </template>
 

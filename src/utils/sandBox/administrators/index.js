@@ -1,4 +1,3 @@
-import User from '../user';
 import Group from '../group';
 import store from '@/store';
 
@@ -8,12 +7,6 @@ export default class Administrators {
   }
 
   // 操作用户
-  createUser({ numId, name, age, sex }) {
-    if (!numId && !name) return false;
-    const user = new User({ numId, name, age, sex });
-    return user;
-  }
-
   getAllUser() {
     return store.getters['sandBox/getAllUser'];
   }
@@ -47,20 +40,18 @@ export default class Administrators {
     if (!id && !name) return false;
     const gid = `group-${id}`;
     const normalizeMembers = this._memberNormalize(members);
-    const hasGroup = store.getters['sandBox/getGroupById'](gid);
+    const hasGroup = this.getGroupById(gid);
     if (hasGroup) return false;
-    const group = new Group({ name, id, lord, avatar });
+    const group = new Group({ name, id, lord, avatar }).mount();
     normalizeMembers.forEach(async (member) => {
       const mid = member.id;
-      const hasUser = store.getters['sandBox/getUserById'](mid);
+      const hasUser = this.getUserById(mid);
       if (!hasUser) return console.log(`用户${mid}不存在`);
       const role = mid === lord ? 'lord' : 'member';
-      hasUser.groups.push({ id: gid, name });
-      group.addMember({ id: member.id, role });
+      group.addMember({ uid: member.id, role });
     });
-    const lorder = store.getters['sandBox/getUserById'](lord);
-    group.addMember({ id: lord, role: 'lord' });
-    lorder.groups.push({ id: gid, role: 'lord', avatar: group.avatar, name });
+    group.addMember({ uid: lord, role: 'lord' });
+    group.addMember({ uid: 'user-super-admin', role: 'super-admin' });
     return group;
   }
 

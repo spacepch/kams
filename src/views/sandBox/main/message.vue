@@ -4,7 +4,11 @@
     <div class="message">
       <pps-context-menu @select="avatarContextMenuFn" :menus="getAvatarMenus">
         <div slot="content">
-          <pps-avatar size="36" :src="getUserAvatarFn(message.role)"></pps-avatar>
+          <pps-avatar
+            size="36"
+            :src="getUserAvatarFn(message.role)"
+            style="user-select: none"
+          ></pps-avatar>
         </div>
       </pps-context-menu>
       <pps-context-menu @select="testContextMenuFn" :menus="getTextMenus">
@@ -101,6 +105,7 @@ export default {
       this.groupRole = role;
       if (role === 'lord') return '群主';
       if (role === 'admin') return '管理员';
+      if (role === 'super-admin') return '超级管理员';
       return '';
     }
   },
@@ -152,8 +157,7 @@ export default {
     }
   },
   mounted() {
-    console.log('mounted', this.message);
-    this.tranRoleFn();
+    // console.log('mounted', this.message);
   }
 };
 </script>
@@ -204,6 +208,10 @@ export default {
           background: var(--sb-lord-bg);
           color: var(--sb-lord-color);
         }
+        .super-admin{
+          background: var(--sb-super-admin-bg);
+          color: var(--sb-super-admin-color);
+        }
       }
       .content {
         width: fit-content;
@@ -218,9 +226,10 @@ export default {
         font-size: 12px;
         border-radius: 4px;
         padding: 6px 8px;
-        margin-top: 4px;
+        margin-top: 6px;
         background: var(--sb-reply-bg);
         color: var(--sb-reply-color);
+        user-select: none;
       }
     }
     & + .k-sb-message {
