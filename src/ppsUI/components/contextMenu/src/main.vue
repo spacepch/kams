@@ -91,14 +91,17 @@ export default {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       const crect = this.$refs.container.getBoundingClientRect();
+
       this.$refs.menu.style.display = '';
       const ulrect = this.$refs.menu.getBoundingClientRect();
+
       this.$refs.menu.style.display = 'none';
       if (windowHeight - crect.bottom < ulrect.height) {
         this.isBottom = true;
         console.warn('[pps-ui]底部超出');
         this.y = windowHeight - ulrect.height - crect.height;
       }
+
       if (windowWidth - crect.right < ulrect.width) {
         this.isRight = true;
         console.warn('[pps-ui]右侧超出');

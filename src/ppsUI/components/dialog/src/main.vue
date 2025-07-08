@@ -93,7 +93,6 @@ export default {
     if (this.show) {
       this.showMessageFn();
     }
-    console.warn('Dialog: 设计缺陷待完善！');
   },
   props: {
     show: {

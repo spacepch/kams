@@ -16,7 +16,7 @@
           <div class="container">
             <div class="nickname">
               <span v-if="chatTarget.isGroup" :class="groupRole" class="groupRole">
-                {{ tranRoleFn() }}
+                {{ tranRoleFn(groupRole) }}
               </span>
               <span>{{ getUserNickname }}</span>
             </div>
@@ -32,8 +32,10 @@
 </template>
 
 <script>
+import { tranRoleMixin } from '@/mixin/index';
 import Administrators from '@/utils/sandBox/administrators';
 import User from '@/utils/sandBox/user';
+import Group from '@/utils/sandBox/group';
 import { mapGetters } from 'vuex';
 export default {
   name: 'k-sb-message',
@@ -43,6 +45,7 @@ export default {
       groupRole: null
     };
   },
+  mixins: [tranRoleMixin],
   props: {
     message: {
       type: Object,
@@ -99,14 +102,21 @@ export default {
       }
       console.log(label, task);
     },
-    tranRoleFn() {
-      const memberList = this.admin.getGroupById(this.chatTarget.id).members;
-      const role = memberList.find((m) => m.id === this.message.role).role;
-      this.groupRole = role;
-      if (role === 'lord') return '群主';
-      if (role === 'admin') return '管理员';
-      if (role === 'super-admin') return '超级管理员';
-      return '';
+    // tranRoleFn() {
+    //   const memberList = this.admin.getGroupById(this.chatTarget.id).members;
+    //   const role = memberList.find((m) => m.id === this.message.role).role;
+    //   this.groupRole = role;
+    //   if (role === 'lord') return '群主';
+    //   if (role === 'admin') return '管理员';
+    //   if (role === 'super-admin') return '超级管理员';
+    //   return '';
+    // }
+    getSenderRoleFn() {
+      if (this.chatTarget.isGroup) {
+        const group = new Group({ id: this.chatTarget.id });
+        const sender = group.getMemberById(this.message.role);
+        this.groupRole = sender.role;
+      }
     }
   },
   computed: {
@@ -157,7 +167,8 @@ export default {
     }
   },
   mounted() {
-    // console.log('mounted', this.message);
+    this.getSenderRoleFn();
+    console.log('message', this.message);
   }
 };
 </script>
@@ -208,7 +219,7 @@ export default {
           background: var(--sb-lord-bg);
           color: var(--sb-lord-color);
         }
-        .super-admin{
+        .super-admin {
           background: var(--sb-super-admin-bg);
           color: var(--sb-super-admin-color);
         }

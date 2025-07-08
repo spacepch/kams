@@ -220,6 +220,7 @@ export default {
   flex-direction: column;
   background: #f2f2f2;
   width: 100%;
+  min-width: 300px;
   height: 100%;
 
   .k-chat-box {

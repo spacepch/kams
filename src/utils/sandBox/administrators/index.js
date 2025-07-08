@@ -42,7 +42,7 @@ export default class Administrators {
     const normalizeMembers = this._memberNormalize(members);
     const hasGroup = this.getGroupById(gid);
     if (hasGroup) return false;
-    const group = new Group({ name, id, lord, avatar }).mount();
+    const group = new Group({ name, numId: id, lord, avatar }).mount();
     normalizeMembers.forEach(async (member) => {
       const mid = member.id;
       const hasUser = this.getUserById(mid);

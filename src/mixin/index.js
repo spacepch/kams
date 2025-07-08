@@ -42,3 +42,22 @@ export const userFullScreen = {
     }
   }
 };
+
+export const tranRoleMixin = {
+  methods: {
+    tranRoleFn(role) {
+      switch (role) {
+        case 'member':
+          return '';
+        case 'lord':
+          return '群主';
+        case 'admin':
+          return '管理员';
+        case 'super-admin':
+          return '超级管理员';
+      }
+    }
+  }
+};
+
+// const permissionList = {}

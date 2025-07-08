@@ -125,10 +125,10 @@
             :default-active="null"
             :key="messageList[0]?.id"
             @select="selectMsgFn"
-            active-color="#752bec"
+            active-color="#fff"
             :active-shape="['background']"
             text-color="#061e26"
-            background-color="#f0e8fd"
+            background-color="#a07fff"
             mode="column"
           >
             <k-menu-item v-for="item in messageList" :key="item.id" :index="item.id" height="60">

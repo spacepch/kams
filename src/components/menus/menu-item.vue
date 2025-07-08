@@ -11,8 +11,11 @@
     <li
       class="k-menu-item"
       :class="[{ className: className }, direction]"
-      :style="[itemStyle, { height: `${height}px`, minHeight: `${height}px` }]"
-
+      :style="[
+        itemStyle,
+        { height: `${height}px`, minHeight: `${height}px` },
+        { justifyContent: align }
+      ]"
       @mouseenter="onmouseenterFn"
       @mouseleave="onMouseLeaveFn"
       @click="handleClickFn"
@@ -45,38 +48,6 @@ export default {
     };
   },
   inject: ['root'],
-  props: {
-    icon: {
-      type: String,
-      default() {
-        return '';
-      }
-    },
-    index: {
-      type: String
-    },
-    title: {
-      type: String
-    },
-    width: {
-      type: String,
-      default() {
-        return '70';
-      }
-    },
-    height: {
-      type: String,
-      default() {
-        return '70';
-      }
-    },
-    className: {
-      type: String,
-      default() {
-        return '';
-      }
-    }
-  },
   methods: {
     onmouseenterFn() {
       this.$el.style.backgroundColor = this.root.backgroundColor;
@@ -132,7 +103,45 @@ export default {
     }
   },
   beforeMount() {},
-  mounted() {}
+  mounted() {},
+  props: {
+    icon: {
+      type: String,
+      default() {
+        return '';
+      }
+    },
+    index: {
+      type: String
+    },
+    title: {
+      type: String
+    },
+    width: {
+      type: String,
+      default() {
+        return '70';
+      }
+    },
+    height: {
+      type: String,
+      default() {
+        return '70';
+      }
+    },
+    className: {
+      type: String,
+      default() {
+        return '';
+      }
+    },
+    align: {
+      type: String,
+      default() {
+        return 'center';
+      }
+    }
+  }
 };
 </script>
 

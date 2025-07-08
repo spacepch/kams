@@ -1,183 +1,142 @@
 <template>
-  <div class="editor-wrapper">
-    <div
-      class="editor"
-      ref="editor"
-      contenteditable="true"
-      @input="onInput"
-      @keydown="onKeydown"
-      @click="onClick"
-    ></div>
+  <div>
+    <ul class="member-list">
+      <li class="member-item" v-for="(user, index) in getMemberList" :key="index">
+        <pps-context-menu :menus="getUserMenuItems(user)" @select="contextMenuFn">
+          <template v-slot:item="{ menu }">
+            <div
+              class="menu-item pps-context-menu-item"
+              v-for="(item, index) in menu"
+              :key="index"
+              @click="contextMenuFn(item)"
+            >
+              {{ item.label }}
+            </div>
+          </template>
 
-    <!-- 用户下拉提示框 -->
-    <ul v-if="showUserList" class="user-list" :style="listStyle">
-      <li
-        v-for="(user, index) in filteredUsers"
-        :key="user.id"
-        :class="{ active: index === activeIndex }"
-        @mousedown.prevent="selectUser(user)"
-      >
-        {{ user.name }}
+          <div class="user-item" slot="content">
+            <pps-avatar :src="user.avatar" size="20"></pps-avatar>
+            <span class="user-name">{{ user.name }}</span>
+            <span :class="user.role" class="user-role">
+              {{ tranRoleFn(user.role) }}
+            </span>
+          </div>
+        </pps-context-menu>
       </li>
     </ul>
-    <pps-button theme="text">@qwe</pps-button>
   </div>
 </template>
+
 <script>
+import f from '@/utils/t';
 export default {
+  methods: {
+    getUserMenuItems(user) {
+      return f.getVisibleMenuItems({ id: 'user-2', role: 'member' }, user, 'group1');
+    },
+    contextMenuFn(item) {
+      switch (item.key) {
+        case 'VIEW_PROFILE':
+          console.log('查看用户信息');
+          break;
+        case 'AT_USER':
+          console.log('at user');
+          break;
+        case 'ADD_FRIEND':
+          console.log('添加好友');
+          break;
+        case 'MUTE_USER':
+          console.log('禁言用户');
+          break;
+        case 'REMOVE_USER':
+          console.log('移除用户');
+          break;
+        case 'SET_ADMIN':
+          console.log('设置管理员');
+          break;
+        case 'REVOKE_ADMIN':
+          console.log('取消管理员');
+          break;
+      }
+    },
+    tranRoleFn(role) {
+      const roleMap = {
+        lord: '群主',
+        admin: '管理员',
+        'super-admin': '超级管理员'
+      };
+      return roleMap[role] || '';
+    }
+  },
   data() {
     return {
-      showUserList: false,
-      users: [
-        { id: 1, name: '张三' },
-        { id: 2, name: '李四' },
-        { id: 3, name: '王五' }
-      ],
-      filteredUsers: [],
-      activeIndex: 0,
-      mentionQuery: '',
-      listStyle: {
-        top: '0px',
-        left: '0px'
-      },
-      lastRange: null
+      getMemberList: [
+        {
+          role: 'admin',
+          id: 'user-2',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/u2',
+          name: 'u2',
+          sex: '女',
+          age: '2',
+          numId: '2'
+        },
+        {
+          role: 'member',
+          id: 'user-3',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/u3',
+          name: 'u3',
+          sex: '男',
+          age: '3',
+          numId: '3'
+        },
+        {
+          role: 'member',
+          id: 'user-4',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/u4',
+          name: 'u4',
+          sex: '女',
+          age: '4',
+          numId: '4'
+        },
+        {
+          role: 'member',
+          id: 'user-5',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/u5',
+          name: 'u5',
+          sex: '男',
+          age: '5',
+          numId: '5'
+        },
+        {
+          role: 'lord',
+          id: 'user-1',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/u1',
+          name: 'u1',
+          sex: '男',
+          age: '1',
+          numId: '1'
+        },
+        {
+          role: 'super-admin',
+          id: 'user-super-admin',
+          avatar: 'https://k.hotaru.icu/api/data/avatar/super',
+          name: '超级管理员',
+          sex: 'bot',
+          age: '100',
+          numId: 'super-admin'
+        }
+      ]
     };
   },
-  methods: {
-    onInput() {
-      const selection = window.getSelection();
-      this.lastRange = selection.getRangeAt(0).cloneRange();
-
-      const text = this.getTextBeforeCursor();
-      const atIndex = text.lastIndexOf('@');
-      if (atIndex !== -1) {
-        this.mentionQuery = text.slice(atIndex + 1);
-        this.filteredUsers = this.users.filter(user =>
-          user.name.includes(this.mentionQuery)
-        );
-        if (this.filteredUsers.length > 0) {
-          this.showUserList = true;
-          this.activeIndex = 0;
-          this.updateListPosition();
-        } else {
-          this.showUserList = false;
-        }
-      } else {
-        this.showUserList = false;
-      }
-    },
-
-    onKeydown(e) {
-      if (!this.showUserList) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        this.activeIndex = (this.activeIndex + 1) % this.filteredUsers.length;
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        this.activeIndex =
-          (this.activeIndex - 1 + this.filteredUsers.length) %
-          this.filteredUsers.length;
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        this.selectUser(this.filteredUsers[this.activeIndex]);
-      } else if (e.key === 'Escape') {
-        this.showUserList = false;
-      }
-    },
-
-    onClick() {
-      this.showUserList = false;
-    },
-
-    selectUser(user) {
-      const range = this.lastRange;
-      if (!range) return;
-
-      // 删除@关键词
-      const text = this.getTextBeforeCursor();
-      const atIndex = text.lastIndexOf('@');
-      range.setStart(range.endContainer, atIndex);
-      range.deleteContents();
-
-      // 插入 span 标签作为 mention
-      const mentionNode = document.createElement('span');
-      mentionNode.textContent = `@${user.name}`;
-      mentionNode.contentEditable = "false";
-      mentionNode.className = 'mention-tag';
-
-      range.insertNode(mentionNode);
-
-      // 添加空格并设置光标
-      const space = document.createTextNode('\u00A0');
-      mentionNode.parentNode.insertBefore(space, mentionNode.nextSibling);
-
-      // 设置光标位置
-      range.setStartAfter(space);
-      range.setEndAfter(space);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-
-      this.showUserList = false;
-    },
-
-    getTextBeforeCursor() {
-      const sel = window.getSelection();
-      if (!sel.rangeCount) return '';
-      const range = sel.getRangeAt(0);
-      const preRange = range.cloneRange();
-      preRange.selectNodeContents(this.$refs.editor);
-      preRange.setEnd(range.endContainer, range.endOffset);
-      return preRange.toString();
-    },
-
-    updateListPosition() {
-      this.$nextTick(() => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount) return;
-        const range = sel.getRangeAt(0).cloneRange();
-        const rect = range.getBoundingClientRect();
-        this.listStyle.top = rect.bottom + window.scrollY + 'px';
-        this.listStyle.left = rect.left + window.scrollX + 'px';
-      });
-    }
+  mounted() {
+    const res = f.getVisibleMenuItems(
+      { id: 'u1', role: 'member' },
+      { id: 'u2', role: 'member' },
+      'group1'
+    );
+    console.log(res);
   }
 };
 </script>
-<style scoped>
-.editor-wrapper {
-  position: relative;
-  width: 400px;
-}
-.editor {
-  border: 1px solid #ccc;
-  padding: 10px;
-  min-height: 100px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.mention-tag {
-  background: #e6f3ff;
-  color: #0077cc;
-  padding: 0 4px;
-  border-radius: 3px;
-}
-.user-list {
-  position: absolute;
-  background: #fff;
-  border: 1px solid #ccc;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  width: 200px;
-  z-index: 999;
-}
-.user-list li {
-  padding: 6px 10px;
-  cursor: pointer;
-}
-.user-list li.active {
-  background-color: #eee;
-}
-</style>
+
+<style></style>

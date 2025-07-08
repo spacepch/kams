@@ -20,7 +20,7 @@
       <k-container direction="horizontal" class="k-chat-main">
         <sb-chat-main @showUserDetail="showUserDetailFn" :chatTarget="chatTarget"></sb-chat-main>
         <!-- 右侧、群聊成员 -->
-        <sb-right-aside v-show="chatTarget.isGroup" :group="getGroupMemberList"></sb-right-aside>
+        <sb-right-aside v-show="chatTarget.isGroup" :chatTarget="chatTarget"></sb-right-aside>
       </k-container>
     </k-container>
   </k-container>
@@ -125,13 +125,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
-    getGroupMemberList() {
-      if (!this.chatTarget.isGroup) return;
-      const gid = this.chatTarget.id;
-      const memberList = this.admin.getGroupById(gid);
-      return memberList;
-    }
+    ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg'])
   },
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');
@@ -171,7 +165,7 @@ export default {
 }
 @media screen and (max-width: 1000px) {
   .aside-group {
-    display: none;
+    // display: none;
   }
 }
 .aside-group,

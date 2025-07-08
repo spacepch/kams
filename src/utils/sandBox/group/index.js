@@ -8,8 +8,9 @@ import store from '@/store';
  * @param {*} avatar 群头像
  */
 export default class Group {
-  constructor({ name, id, lord, avatar }) {
-    this.id = `group-${id}`;
+  constructor({ name, numId, id, lord, avatar }) {
+    this.id = id || `group-${numId}`;
+    this.numId = numId;
     this.name = name;
     this.lord = lord;
     this.avatar = avatar || `https://k.hotaru.icu/api/data/avatar/${name}`;
@@ -24,7 +25,15 @@ export default class Group {
   }
 
   getAllMember() {
-    return this.self().members;
+    return this.self().members.map((member) => {
+      const user = store.getters['sandBox/getUserById'](member.id);
+      const { id, avatar, name, sex, age, numId } = user;
+      return { role: member.role, id, avatar, name, sex, age, numId };
+    });
+  }
+
+  getMemberById(id) {
+    return this.getAllMember().find((member) => member.id === id);
   }
 
   addMember({ uid, role }) {

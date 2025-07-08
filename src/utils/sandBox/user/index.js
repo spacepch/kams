@@ -4,7 +4,6 @@ import { nanoid } from 'nanoid';
 
 const ROLE_SELF = 'self';
 const ROLE_FRIEND = 'friend';
-console.error('User: 创建群聊功能待完善！');
 // 用户类
 /**
  * @description: 用户类
@@ -121,7 +120,7 @@ export default class User {
     const normalizeMembers = this._memberNormalize(members);
     const hasGroup = this.getGroupById(gid);
     if (hasGroup) return false;
-    const group = new Group({ name, id, lord: this.id, avatar }).mount();
+    const group = new Group({ name, numId: id, lord: this.id, avatar }).mount();
     normalizeMembers.forEach(async (member) => {
       const mid = member.id;
       const hasUser = this.getUserById(mid);
