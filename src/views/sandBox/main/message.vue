@@ -2,7 +2,7 @@
   <div class="k-sb-message" :class="{ 'k-sb-message-self': isSelf }">
     <div class="date"><span v-trans-time="message.date"></span></div>
     <div class="message">
-      <pps-context-menu @select="avatarContextMenuFn" :menus="getAvatarMenus">
+      <pps-context-menu @select="avatarContextMenuFn" :menus="getUserMenuItems()">
         <div slot="content">
           <pps-avatar
             size="36"
@@ -15,8 +15,8 @@
         <div slot="content">
           <div class="container">
             <div class="nickname">
-              <span v-if="chatTarget.isGroup" :class="groupRole" class="groupRole">
-                {{ tranRoleFn(groupRole) }}
+              <span v-if="chatTarget.isGroup" :class="groupRole.role" class="groupRole">
+                {{ tranRoleFn(groupRole.role) }}
               </span>
               <span>{{ getUserNickname }}</span>
             </div>
@@ -33,9 +33,9 @@
 
 <script>
 import { tranRoleMixin } from '@/mixin/index';
+import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import Administrators from '@/utils/sandBox/administrators';
 import User from '@/utils/sandBox/user';
-import Group from '@/utils/sandBox/group';
 import { mapGetters } from 'vuex';
 export default {
   name: 'k-sb-message',
@@ -66,6 +66,12 @@ export default {
       default() {
         return null;
       }
+    },
+    memberList: {
+      type: Array,
+      default() {
+        return [];
+      }
     }
   },
   methods: {
@@ -92,31 +98,19 @@ export default {
         this.$emit('replyMsg', this.message);
       }
     },
-    avatarContextMenuFn({ label, task }) {
-      if (task === 0) {
-        const user = this.admin.getUserById(this.message.role);
-        // console.log(user);
-        this.$emit('showUserDetail', user);
-      } else if (task === 1) {
-        this.$emit('mentionMember', this.message.role);
-      }
-      console.log(label, task);
-    },
-    // tranRoleFn() {
-    //   const memberList = this.admin.getGroupById(this.chatTarget.id).members;
-    //   const role = memberList.find((m) => m.id === this.message.role).role;
-    //   this.groupRole = role;
-    //   if (role === 'lord') return '群主';
-    //   if (role === 'admin') return '管理员';
-    //   if (role === 'super-admin') return '超级管理员';
-    //   return '';
-    // }
     getSenderRoleFn() {
       if (this.chatTarget.isGroup) {
-        const group = new Group({ id: this.chatTarget.id });
-        const sender = group.getMemberById(this.message.role);
-        this.groupRole = sender.role;
+        const sender = this.memberList.find(({ id }) => id === this.message.role);
+        this.groupRole = sender;
       }
+    },
+    getUserMenuItems() {
+      if (this.chatTarget.isGroup) {
+        const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
+        const targetUser = this.memberList.find(({ id }) => id === this.message.role);
+        return getVisibleMenuItems(curUer, targetUser);
+      }
+      return [];
     }
   },
   computed: {
@@ -139,37 +133,13 @@ export default {
       } else {
         return [{ label: '回复消息', task: 1 }];
       }
-    },
-    getAvatarMenus() {
-      const menus_normal = [];
-      if (this.chatTarget.isGroup) {
-        const group = this.admin.getGroupById(this.chatTarget.id);
-        menus_normal.push({ label: '查看资料', task: 0 });
-        // const g = this.admin.getGroupById(this.getCurrentMsg.id)
-        // console.log(g);
-
-        if (!this.isSelf) {
-          menus_normal.push({ label: '@ TA', task: 1 });
-          menus_normal.push({ label: '添加好友', task: 2 });
-
-          const isAdmin = new User(this.getCurrentUser)._isAdmin(this.chatTarget.id);
-          if (isAdmin) {
-            if (this.message.role !== group.lord) {
-              menus_normal.push({ label: '设置禁言', task: 3 });
-              menus_normal.push({ label: '移出本群', task: 4 });
-            } else {
-              //
-            }
-          }
-        }
-      }
-      return menus_normal;
     }
   },
-  mounted() {
+  created() {
     this.getSenderRoleFn();
-    console.log('message', this.message);
-  }
+    // console.log('message', this.groupRole);
+  },
+  mounted() {}
 };
 </script>
 

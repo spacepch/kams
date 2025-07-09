@@ -18,9 +18,20 @@
         </div>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
-        <sb-chat-main @showUserDetail="showUserDetailFn" :chatTarget="chatTarget"></sb-chat-main>
+        <sb-chat-main
+          ref="chatMainRef"
+          @showUserDetail="showUserDetailFn"
+          :chatTarget="chatTarget"
+          :memberList="getMemberList"
+          @handleMenuAction="handleMenuAction"
+        ></sb-chat-main>
         <!-- 右侧、群聊成员 -->
-        <sb-right-aside v-show="chatTarget.isGroup" :chatTarget="chatTarget"></sb-right-aside>
+        <sb-right-aside
+          v-if="chatTarget.isGroup"
+          :chatTarget="chatTarget"
+          :memberList="getMemberList"
+          @handleMenuAction="handleMenuAction"
+        ></sb-right-aside>
       </k-container>
     </k-container>
   </k-container>
@@ -30,6 +41,7 @@
 import { mapGetters } from 'vuex';
 import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
+import Group from '@/utils/sandBox/group';
 import kContainer from '@/components/layout/container';
 import sbLeftAside from './aside/left.vue';
 import sbRightAside from './aside/right.vue';
@@ -114,18 +126,66 @@ export default {
       this.screen.height = height;
     },
     updateChatTargetFn(id, isGroup) {
+      console.log('chage', id, isGroup);
       this.chatTarget.id = id;
       this.chatTarget.isGroup = isGroup;
     },
     switchMsgCallback(params) {
       console.log(params);
     },
-    showUserDetailFn(userInfo) {
-      this.$refs.leftAsideRef.showUserDetailFn(userInfo);
+    showUserDetailFn(userInfo) {},
+    handleMenuAction(action) {
+      console.log(action);
+      const { actionType, currentUer, targetUser, groupId } = action;
+      const actionMap = {
+        VIEW_PROFILE: this.viewUserProfile,
+        ADD_FRIEND: this.addFriend,
+        AT_USER: this.mentionUser,
+        REMOVE_USER: this.kickMember,
+        MUTE_USER: this.muteMember,
+        REVOKE_ADMIN: this.revokeAdmin,
+        SET_ADMIN: this.setAdmin
+      };
+      if (actionMap[actionType]) {
+        actionMap[actionType](targetUser, currentUer, groupId);
+      }
+    },
+    viewUserProfile(targetUser, groupId, currentUer) {
+      this.$refs.leftAsideRef.showUserDetailFn(targetUser);
+    },
+    mentionUser(targetUser, groupId, currentUer) {
+      this.$refs.chatMainRef.mentionMember(targetUser.name);
+    },
+    addFriend(targetUser, groupId, currentUer) {
+      console.log('addFriend');
+      const user = new User(this.getCurrentUser);
+      user.addFriend(targetUser.id);
+    },
+    muteMember(targetUser, groupId, currentUer) {
+      console.log('muteMember');
+    },
+    kickMember(targetUser, groupId, currentUer) {
+      console.log('kickMember');
+    },
+    setAdmin(targetUser, groupId, currentUer) {
+      console.log('setAdmin');
+    },
+    revokeAdmin(targetUser, groupId, currentUer) {
+      console.log('revokeAdmin');
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg'])
+    ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
+    getMemberList() {
+      let memberList = [];
+      if (this.chatTarget.isGroup) {
+        console.log('getMemberList');
+        const { id } = this.admin.getGroupById(this.chatTarget.id);
+        console.log('getMemberList', id);
+        memberList = new Group({ id }).getAllMember();
+      }
+      return memberList;
+    }
   },
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');

@@ -25,6 +25,7 @@ export default class Group {
   }
 
   getAllMember() {
+    console.log('group', this.self());
     return this.self().members.map((member) => {
       const user = store.getters['sandBox/getUserById'](member.id);
       const { id, avatar, name, sex, age, numId } = user;

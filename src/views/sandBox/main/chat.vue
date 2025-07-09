@@ -9,9 +9,9 @@
           :chatTarget="chatTarget"
           :isSelf="isSelfFn(item.role)"
           :key="item.id"
-          @showUserDetail="showUserDetailFn"
-          @mentionMember="mentionMember"
+          :memberList="memberList"
           @replyMsg="replyMsgFn"
+          @handleMenuAction="handleMenuAction"
         ></k-sb-message>
         User类踢出成员方法待完善
       </div>
@@ -61,6 +61,12 @@ export default {
       type: Object,
       default() {
         return null;
+      }
+    },
+    memberList: {
+      type: Array,
+      default() {
+        return [];
       }
     }
   },
@@ -115,13 +121,10 @@ export default {
         }
       }
     },
-    showUserDetailFn(userInfo) {
-      this.$emit('showUserDetail', userInfo);
-    },
     inputFn() {
       this.message = this.$refs.input.innerText;
     },
-    mentionMember(user) {
+    mentionMember(username) {
       const input = this.$refs.input;
       input.focus();
 
@@ -143,7 +146,7 @@ export default {
 
       // 插入 mention 节点
       const mentionNode = document.createElement('button');
-      mentionNode.textContent = `@${user}`;
+      mentionNode.textContent = `@${username}`;
       mentionNode.contentEditable = 'false';
       mentionNode.className = 'pps-button-text pps-button';
 
@@ -176,6 +179,9 @@ export default {
       this.replyMsg = { name, ...msg };
       this.$refs.input.focus();
       console.log(this.replyMsg);
+    },
+    handleMenuAction(action) {
+      this.$emit('handleMenuAction', action);
     }
   },
   computed: {
@@ -205,7 +211,7 @@ export default {
     }
   },
   mounted() {
-    // this.messageList = this
+    console.log(this.messageList);
     if (this.$refs.input) {
       this.$refs.input.focus();
     }

@@ -3,29 +3,8 @@
     <div class="title">群聊成员</div>
     <template #inner>
       <ul class="member-list">
-        <li
-          class="member-item"
-          v-for="(user, index) in getMemberList"
-          :key="index"
-          @click="showMemberInfoFn(user.id)"
-        >
-          <pps-context-menu
-            :menus="[
-              { label: '发起群聊', uid: `${user.id}`, task: 1 },
-              { label: '移除群聊', uid: `${user.id}`, task: 2 }
-            ]"
-            @select="contextMenuFn"
-          >
-            <template v-slot:item="{ menu }">
-              <div
-                class="menu-item pps-context-menu-item"
-                v-for="(item, index) in menu"
-                :key="index"
-                @click="contextMenuFn(item)"
-              >
-                {{ item.label }}
-              </div>
-            </template>
+        <li class="member-item" v-for="(user, index) in memberList" :key="index">
+          <pps-context-menu :menus="getUserMenuItems(user)" @select="avatarContextMenuFn">
             <div class="user-item" slot="content">
               <pps-avatar :src="user.avatar" size="20"></pps-avatar>
               <div class="user-name">{{ user.name }}</div>
@@ -43,26 +22,27 @@
 
 <script>
 import { tranRoleMixin } from '@/mixin/index';
+import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import kSbAside from '@/components/layout/aside';
-import kMenuItem from '@/components/menus/menu-item.vue';
-import kMenu from '@/components/menus/';
 // import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
-import Group from '@/utils/sandBox/group';
+import { mapGetters } from 'vuex';
 export default {
   name: 'sb-right-aside',
   components: {
-    kSbAside,
-    // eslint-disable-next-line vue/no-unused-components
-    kMenu,
-    // eslint-disable-next-line vue/no-unused-components
-    kMenuItem
+    kSbAside
   },
   props: {
     chatTarget: {
       type: [Object, Boolean],
       default() {
         return null;
+      }
+    },
+    memberList: {
+      type: Array,
+      default() {
+        return [];
       }
     }
   },
@@ -76,25 +56,18 @@ export default {
     test() {
       console.log('test', this.getMemberList);
     },
-    contextMenuFn(item) {
-      console.log(item);
+    getUserMenuItems(user) {
+      const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
+      return getVisibleMenuItems(curUer, user);
     },
-    showMemberInfoFn(member) {
-      console.log(member);
-    }
+    handleMenuAction() {}
   },
   computed: {
-    getMemberList() {
-      let memberList = [];
-      if (this.chatTarget.isGroup) {
-        const { id, name, lord } = this.admin.getGroupById(this.chatTarget.id);
-        memberList = new Group({ id, name, lord }).getAllMember();
-        console.log(memberList);
-      }
-      return memberList;
-    }
+    ...mapGetters('sandBox', ['getCurrentUser'])
   },
-  mounted() {}
+  mounted() {
+    // console.log(this.memberList);
+  }
 };
 </script>
 

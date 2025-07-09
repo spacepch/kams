@@ -9,7 +9,6 @@ export default {
     return state.users.find((user) => user.id === id) || false;
   },
   getAllUser: (state) => {
-    console.log('getAllUser', state.users);
     return state.users;
   },
 

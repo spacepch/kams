@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid';
 
 const ROLE_SELF = 'self';
 const ROLE_FRIEND = 'friend';
+console.error('user: 删除群聊方法待完善！');
 // 用户类
 /**
  * @description: 用户类

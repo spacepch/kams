@@ -131,7 +131,7 @@
             background-color="#a07fff"
             mode="column"
           >
-            <k-menu-item v-for="item in messageList" :key="item.id" :index="item.id" height="60">
+            <k-menu-item v-for="item in showMessageList" :key="item.id" :index="item.id" height="60">
               <div class="list-item">
                 <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
                 <div class="name" :title="item.name">{{ item.name }}</div>
@@ -409,9 +409,7 @@ export default {
     switchUserFn(id) {
       this.$store.commit('sandBox/SWITCH_USER', id);
       this.$refs.msgMenuRef.activeIndex = null;
-      this.getMessageList();
       this.$store.commit('sandBox/SWITCH_CHAT');
-      console.log('switchUser');
     },
     removeUserFn(id) {
       const admin = new Administrators();
@@ -450,13 +448,14 @@ export default {
     },
     createGroupFn() {
       const admin = new Administrators();
-      const res = admin.createGroup({
-        id: this.createGroup.id,
-        name: this.createGroup.name,
-        lord: this.getCurrentUser.id,
-        avatar: this.createGroup.avatar,
-        members: this.createGroup.checkList
-      }).mount();
+      const res = admin
+        .createGroup({
+          id: this.createGroup.id,
+          name: this.createGroup.name,
+          lord: this.getCurrentUser.id,
+          avatar: this.createGroup.avatar,
+          members: this.createGroup.checkList
+        })
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊创建失败！信息不完整或已存在' })
           .then((action) => {
@@ -465,8 +464,6 @@ export default {
           .catch((error) => {
             console.log(error);
           });
-      } else {
-        this.getMessageList();
       }
     },
     handleSelectionChange(val) {
@@ -488,7 +485,6 @@ export default {
     },
     toggleMsgTabFn(tab) {
       this.messageMode = tab;
-      this.getMessageList();
     },
     switchSearchTabFn(tab) {
       this.searchDialog.index = tab;
@@ -542,30 +538,13 @@ export default {
           // this.tableData = admin.getAllRobots();
           break;
       }
-      this.getMessageList();
     },
     emitTabUpdate() {
       this.$refs['k-tab'].changeTabFn();
     },
-    getMessageList() {
-      const user = new User(this.getCurrentUser);
-      this.messageList = [];
-      if (this.messageMode) {
-        const g_list = user.getAllGroups().map(({ id }) => id);
-        const admin = new Administrators();
-        admin.getAllGroup().forEach((group) => {
-          if (g_list.includes(group.id)) {
-            this.messageList.push(group);
-          }
-        });
-      } else {
-        this.messageList = user.getAllFriend() || [];
-      }
-    },
     deleteFriendMsgFn(friend) {
       const curUser = new User(this.getCurrentUser);
       console.log(curUser.deleteFriendMessage(friend.id));
-      this.getMessageList();
     },
     removeGroupFn(group) {
       const user = new User(this.getCurrentUser);
@@ -573,7 +552,6 @@ export default {
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊删除失败！' });
       }
-      this.getMessageList();
     },
     leaveGroupFn(group) {
       const user = new User(this.getCurrentUser);
@@ -581,7 +559,6 @@ export default {
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊退出失败！' });
       }
-      this.getMessageList();
     },
     curUserGroupListFn() {
       const group_list = new User(this.getCurrentUser).getAllGroups();
@@ -627,6 +604,15 @@ export default {
         isAdded = curUser.groups.some((group) => group.id === `group-${this.searchDialog.input}`);
       }
       return isAdded;
+    },
+    showMessageList() {
+      console.log('showMessageList');
+      const user = new User(this.getCurrentUser);
+      if (this.messageMode) {
+        return user.getAllGroups();
+      } else {
+        return user.getAllFriend();
+      }
     }
   },
   watch: {
@@ -640,10 +626,7 @@ export default {
       }
     }
   },
-  mounted() {
-    // console.log(this.getAllUser);
-    // console.log(this.getCurrentUser);
-  }
+  mounted() {}
 };
 </script>
 

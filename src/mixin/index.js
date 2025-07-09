@@ -46,15 +46,18 @@ export const userFullScreen = {
 export const tranRoleMixin = {
   methods: {
     tranRoleFn(role) {
-      switch (role) {
-        case 'member':
-          return '';
-        case 'lord':
-          return '群主';
-        case 'admin':
-          return '管理员';
-        case 'super-admin':
-          return '超级管理员';
+      const roleMap = {
+        lord: '群主',
+        admin: '管理员',
+        'super-admin': '超级管理员'
+      };
+      return roleMap[role] || '';
+    },
+    avatarContextMenuFn(menu) {
+      const { uid, task, key } = menu;
+      if (task) {
+        const user = this.admin.getUserById(uid);
+        this.$emit('handleMenuAction', { targetUser: user, actionType: key });
       }
     }
   }
