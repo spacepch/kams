@@ -141,7 +141,7 @@ export default class User {
   removeGroupById(gid) {
     const group = store.getters['sandBox/getGroupById'](gid);
     const members = group.members;
-    const isLord = group.lord === this.id;
+    const isLord = group.lord === this.id || this.self().isSuper;
     if (!isLord) return false;
     members.forEach((member) => {
       const user = store.getters['sandBox/getUserById'](member.id);

@@ -1,4 +1,5 @@
 import Vue from 'vue';
+console.error('store 删除用户、清空群里等mutations待完善！');
 export default {
   // 用户
   ADD_USER(state, user) {
@@ -111,14 +112,12 @@ export default {
   },
   SEND_PRIVATE_MESSAGE(state, { sender, receiver, message }) {
     const senderMsg = state.privateMsg[sender];
-    Reflect.has(senderMsg, receiver) || (senderMsg[receiver] = []); // 创建接收者的消息列表
+    Reflect.has(senderMsg, receiver) || Vue.set(senderMsg, receiver, []); // 创建接收者的消息列表
     senderMsg[receiver].push(message);
   },
   DEL_PRIVATE_MESSAGE(state, { sender, receiver, msgId = false }) {
-    if (!msgId) {
-      delete state.privateMsg[sender][receiver];
-      return;
-    }
+    if (!msgId) return (state.privateMsg[sender][receiver] = []);
+
     const index = state.privateMsg[sender][receiver].findIndex((msg) => msg.id === msgId);
     state.privateMsg[sender][receiver].splice(index, 1);
   },
@@ -127,24 +126,22 @@ export default {
       console.log('群聊消息已存在');
       return false;
     }
-    state.groupMsg[group.id] = {
+    Vue.set(state.groupMsg, group.id, {
       name: group.name,
       id: group.id,
       isMute: false,
       muteMembers: [],
       messages: []
-    };
+    });
   },
   SEND_GROUP_MESSAGE(state, { gid, message }) {
-    if (!state.groupMsg[gid].messages) state.groupMsg[gid].messages = [];
+    if (!state.groupMsg[gid].messages) Vue.set(state.groupMsg[gid], 'messages', []);
     state.groupMsg[gid].messages.push(message);
   },
   DEL_GROUP_MESSAGE(state, { id, msgId = false }) {
-    if (!msgId) {
-      delete state.groupMsg[id];
-      return;
-    }
-    if (!state.groupMsg[id].messages) return false;
+    if (!msgId) return (state.groupMsg[id].messages = []);
+    if (!state.groupMsg[id].messages.length) return false;
+
     const index = state.groupMsg[id].messages.findIndex((msg) => msg.id === msgId);
     state.groupMsg[id].messages.splice(index, 1);
   },
@@ -158,26 +155,30 @@ export default {
   UNMUTE_MEMBER(state, { gid, mid }) {
     const groupMsg = state.groupMsg[gid];
     if (groupMsg && groupMsg.muteMembers.includes(mid)) {
-      groupMsg.muteMembers = groupMsg.muteMembers.filter((id) => id !== mid);
+      const index = groupMsg.muteMembers.findIndex((id) => id !== mid);
+      groupMsg.muteMembers.splice(index, 1);
     }
   },
   CLEAR_USER_MESSAGE(state, id) {
     if (id) {
-      delete state.privateMsg[id];
-      return;
+      // 清空该用户所有好友关于该用户的消息
+      const friend_list = state.users.find((user) => user.id === id).friends;
+      friend_list.forEach((friend) => {
+        Vue.delete(state.privateMsg[friend.id], id);
+      });
+      // 清空该用户所有消息
+      Vue.delete(state.privateMsg, id);
+      return true;
     }
-    Object.keys(state.privateMsg).forEach((key) => {
-      state.privateMsg[key] = {};
-    });
+    // 清空所有用户消息
+    Vue.set(state, 'privateMsg', {});
   },
   CLEAR_GROUP_MESSAGE(state, id) {
-    if (id) {
-      delete state.groupMsg[id];
-      return;
-    }
-    Object.keys(state.groupMsg).forEach((key) => {
-      state.groupMsg[key].messages = [];
-    });
+    // 清空指定群聊消息
+    if (id) return Vue.delete(state.groupMsg, id);
+
+    // 清空所有群聊消息
+    Vue.set(state, 'groupMsg', {});
   },
 
   // 用户切换
