@@ -27,7 +27,7 @@
         ></sb-chat-main>
         <!-- 右侧、群聊成员 -->
         <sb-right-aside
-          v-if="chatTarget.isGroup"
+          v-if="chatTarget.isGroup && getMemberList.length"
           :chatTarget="chatTarget"
           :memberList="getMemberList"
           @handleMenuAction="handleMenuAction"
@@ -126,16 +126,16 @@ export default {
       this.screen.height = height;
     },
     updateChatTargetFn(id, isGroup) {
-      console.log('chage', id, isGroup);
+      // console.log('chage', id, isGroup);
       this.chatTarget.id = id;
       this.chatTarget.isGroup = isGroup;
     },
     switchMsgCallback(params) {
-      console.log(params);
+      // console.log(params);
     },
     showUserDetailFn(userInfo) {},
     handleMenuAction(action) {
-      console.log(action);
+      // console.log(action);
       const { actionType, currentUer, targetUser, groupId } = action;
       const actionMap = {
         VIEW_PROFILE: this.viewUserProfile,
@@ -177,14 +177,11 @@ export default {
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
     getMemberList() {
-      let memberList = [];
-      if (this.chatTarget.isGroup) {
-        console.log('getMemberList');
-        const { id } = this.admin.getGroupById(this.chatTarget.id);
-        console.log('getMemberList', id);
-        memberList = new Group({ id }).getAllMember();
+      if (this.chatTarget.isGroup && this.getCurrentMsg) {
+        const group = this.admin.getGroupById(this.chatTarget.id);
+        return group ? new Group({ id: group.id }).getAllMember() : [];
       }
-      return memberList;
+      return [];
     }
   },
   mounted() {

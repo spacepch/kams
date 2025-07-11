@@ -140,14 +140,11 @@ export default class User {
    */
   removeGroupById(gid) {
     const group = store.getters['sandBox/getGroupById'](gid);
-    const members = group.members;
+    if (!group) return false;
     const isLord = group.lord === this.id || this.self().isSuper;
     if (!isLord) return false;
-    members.forEach((member) => {
-      const user = store.getters['sandBox/getUserById'](member.id);
-      user.groups = user.groups.filter((group) => group.id !== gid);
-    });
-    store.commit('sandBox/DEL_GROUP_MESSAGE', { gid });
+
+    store.commit('sandBox/CLEAR_GROUP_MESSAGE', gid);
     store.commit('sandBox/REMOVE_GROUP', gid);
     return true;
   }

@@ -61,17 +61,15 @@ export default {
     }
   },
   REMOVE_GROUP(state, id) {
-    // const hasGroup = state.groups.length && state.groups.find((group) => group.id === id);
-    // console.log(hasGroup);
-    // if (hasGroup) {
-    //   state.groups = state.groups.filter((group) => group.id !== id);
-    // } else {
-    //   console.log('群组不存在');
-    //   return false;
-    // }
-
     if (!state.groups.length) return false;
-    state.groups = state.groups.filter((group) => group.id !== id);
+    const group = state.groups.find((group) => group.id === id);
+    group.members.forEach((member) => {
+      const user = state.users.find((user) => user.id === member.id);
+      const user_group_index = user.groups.findIndex((group) => group.id === id);
+      user.groups.splice(user_group_index, 1);
+    });
+    const groupIndex = state.groups.findIndex((group) => group.id === id);
+    state.groups.splice(groupIndex, 1);
   },
   CLEAR_GROUPS(state) {
     state.groups = [];
@@ -183,12 +181,19 @@ export default {
 
   // 用户切换
   SWITCH_USER(state, id) {
-    if (!id && state.currentUser === null) state.currentUser = state.users[0];
-    if (id) state.currentUser = state.users.find((user) => user.id === id);
+    if (id) {
+      if (id !== state.currentUser?.id) {
+        const targetUser = state.users.find((user) => user.id === id);
+        console.log(targetUser);
+        state.currentUser = targetUser || null;
+      }
+    } else {
+      if (state.currentUser === null) state.currentUser = state.users[0];
+    }
   },
 
   // 切换对话窗口
-  SWITCH_CHAT(state, msg = null) {
+  SWITCH_CHAT(state, { msg = null, id }) {
     if (msg) {
       state.currentMsg = msg;
     } else {

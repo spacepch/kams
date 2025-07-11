@@ -8,6 +8,7 @@
         v-show="showContextMenu"
         class="pps-context-menu_wrapper"
         :style="{ left: x + 'px', top: y + 'px' }"
+        @click="(e) => e.stopPropagation()"
       >
         <div class="pps-context-menu_prepend" v-if="$slots.prepend">
           <slot name="prepend"></slot>
@@ -18,7 +19,7 @@
               class="pps-context-menu-item"
               v-for="(item, index) in menus"
               :key="index"
-              @click="handleSelect(item)"
+              @click="handleSelect(item, $event)"
             >
               {{ item.label }}
             </li>
@@ -74,7 +75,8 @@ export default {
     };
   },
   methods: {
-    handleSelect(item) {
+    handleSelect(item, event) {
+      event.stopPropagation();
       this.showContextMenu = false;
       this.$emit('select', item);
     },

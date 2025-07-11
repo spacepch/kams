@@ -38,17 +38,17 @@
           >
             <pps-context-menu
               :menus="[{ label: '发起群聊', uid: `${user.id}`, task: 1 }]"
-              @select="contextMenuFn"
+              @select.stop="contextMenuFn"
             >
               <template slot="prepend">
                 <el-tooltip class="item" effect="dark" content="账户信息" placement="top">
-                  <pps-icon icon="pps-icon-account" @click="showUserDetailFn(user)"></pps-icon>
+                  <pps-icon icon="pps-icon-account" @click.stop="showUserDetailFn(user)"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="好友" placement="top">
-                  <pps-icon icon="pps-icon-contact" @click="show.friendList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-contact" @click.stop="show.friendList = true"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="群聊" placement="top">
-                  <pps-icon icon="pps-icon-group" @click="show.groupList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-group" @click.stop="show.groupList = true"></pps-icon>
                 </el-tooltip>
               </template>
               <div class="delete-user" slot="append">
@@ -61,7 +61,7 @@
                   class="menu-item"
                   v-for="(item, index) in menu"
                   :key="index"
-                  @click="contextMenuFn(item)"
+                  @click.stop="contextMenuFn(item)"
                 >
                   {{ item.label }}
                 </div>
@@ -131,7 +131,12 @@
             background-color="#a07fff"
             mode="column"
           >
-            <k-menu-item v-for="item in showMessageList" :key="item.id" :index="item.id" height="60">
+            <k-menu-item
+              v-for="item in showMessageList"
+              :key="item.id"
+              :index="item.id"
+              height="60"
+            >
               <div class="list-item">
                 <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
                 <div class="name" :title="item.name">{{ item.name }}</div>
@@ -409,7 +414,8 @@ export default {
     switchUserFn(id) {
       this.$store.commit('sandBox/SWITCH_USER', id);
       this.$refs.msgMenuRef.activeIndex = null;
-      this.$store.commit('sandBox/SWITCH_CHAT');
+      this.$store.commit('sandBox/SWITCH_CHAT', { id });
+      console.log('switchUser');
     },
     removeUserFn(id) {
       const admin = new Administrators();
@@ -448,14 +454,13 @@ export default {
     },
     createGroupFn() {
       const admin = new Administrators();
-      const res = admin
-        .createGroup({
-          id: this.createGroup.id,
-          name: this.createGroup.name,
-          lord: this.getCurrentUser.id,
-          avatar: this.createGroup.avatar,
-          members: this.createGroup.checkList
-        })
+      const res = admin.createGroup({
+        id: this.createGroup.id,
+        name: this.createGroup.name,
+        lord: this.getCurrentUser.id,
+        avatar: this.createGroup.avatar,
+        members: this.createGroup.checkList
+      });
       if (!res) {
         this.$dialog({ title: '警告', content: '群聊创建失败！信息不完整或已存在' })
           .then((action) => {
@@ -577,11 +582,11 @@ export default {
       let chat;
       if (this.messageMode) {
         chat = user.getGroupMessageById(index);
-        this.$store.commit('sandBox/SWITCH_CHAT', chat);
+        this.$store.commit('sandBox/SWITCH_CHAT', { msg: chat, id: index });
         this.updateChatTarget(index, true);
       } else {
         chat = user.getFriendMessageById(index);
-        this.$store.commit('sandBox/SWITCH_CHAT', chat);
+        this.$store.commit('sandBox/SWITCH_CHAT', { msg: chat, id: index });
         this.updateChatTarget(index, false);
       }
       this.$emit('switchMsg', chat);
@@ -606,7 +611,7 @@ export default {
       return isAdded;
     },
     showMessageList() {
-      console.log('showMessageList');
+      // console.log('showMessageList');
       const user = new User(this.getCurrentUser);
       if (this.messageMode) {
         return user.getAllGroups();

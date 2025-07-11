@@ -211,7 +211,7 @@ export default {
     }
   },
   mounted() {
-    console.log(this.messageList);
+    // console.log(this.messageList);
     if (this.$refs.input) {
       this.$refs.input.focus();
     }
