@@ -135,19 +135,20 @@ export default {
     },
     showUserDetailFn(userInfo) {},
     handleMenuAction(action) {
-      // console.log(action);
       const { actionType, currentUer, targetUser, groupId } = action;
       const actionMap = {
         VIEW_PROFILE: this.viewUserProfile,
         ADD_FRIEND: this.addFriend,
+        REMOVE_FRIEND: this.removeFriend,
         AT_USER: this.mentionUser,
         REMOVE_USER: this.kickMember,
         MUTE_USER: this.muteMember,
+        UNMUTE_USER: this.unmuteMember,
         REVOKE_ADMIN: this.revokeAdmin,
         SET_ADMIN: this.setAdmin
       };
       if (actionMap[actionType]) {
-        actionMap[actionType](targetUser, currentUer, groupId);
+        actionMap[actionType](targetUser, groupId, currentUer);
       }
     },
     viewUserProfile(targetUser, groupId, currentUer) {
@@ -159,19 +160,51 @@ export default {
     addFriend(targetUser, groupId, currentUer) {
       console.log('addFriend');
       const user = new User(this.getCurrentUser);
-      user.addFriend(targetUser.id);
+      const res = user.addFriend(targetUser.id);
+      if (res) this.$message.success('添加成功！');
+      else this.$message.error('添加失败！');
+    },
+    removeFriend(targetUser, groupId, currentUer) {
+      console.log('removeFriend');
+      const user = new User(this.getCurrentUser);
+      user.removeFriendById(targetUser.id);
     },
     muteMember(targetUser, groupId, currentUer) {
-      console.log('muteMember');
+      console.log('muteMember', groupId, targetUser);
+      const user = new User(this.getCurrentUser);
+      user.muteMemberById(groupId, targetUser.id);
+    },
+    unmuteMember(targetUser, groupId, currentUer) {
+      const user = new User(this.getCurrentUser);
+      const res = user.unmuteMemberById(groupId, targetUser.id);
+      if (res) {
+        console.log('unmuteMember success');
+      } else {
+        console.log('unmuteMember fail');
+      }
     },
     kickMember(targetUser, groupId, currentUer) {
       console.log('kickMember');
+      const user = new User(this.getCurrentUser);
+      const res = user.kickMemberById({ groupId, expellee: targetUser.id });
+      if (res) {
+        console.log('kickMember success');
+      } else {
+        console.log('kickMember fail');
+      }
     },
     setAdmin(targetUser, groupId, currentUer) {
       console.log('setAdmin');
+      const res = new User(this.getCurrentUser).setGroupAdmin({
+        gid: groupId,
+        mid: targetUser.id
+      });
+      console.log(res);
     },
     revokeAdmin(targetUser, groupId, currentUer) {
       console.log('revokeAdmin');
+      const res = new User(this.getCurrentUser).revokeGroupAdmin(groupId, targetUser.id);
+      console.log(res);
     }
   },
   computed: {

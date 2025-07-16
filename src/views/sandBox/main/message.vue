@@ -6,6 +6,7 @@
         <div slot="content">
           <pps-avatar
             size="36"
+            @click="viewUserProfile()"
             :src="getUserAvatarFn(message.role)"
             style="user-select: none"
           ></pps-avatar>
@@ -15,8 +16,8 @@
         <div slot="content">
           <div class="container">
             <div class="nickname">
-              <span v-if="chatTarget.isGroup" :class="groupRole.role" class="groupRole">
-                {{ tranRoleFn(groupRole.role) }}
+              <span v-if="chatTarget.isGroup" :class="getGroupSenderRole.role" class="groupRole">
+                {{ getRole }}
               </span>
               <span>{{ getUserNickname }}</span>
             </div>
@@ -36,13 +37,13 @@ import { tranRoleMixin } from '@/mixin/index';
 import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import Administrators from '@/utils/sandBox/administrators';
 import User from '@/utils/sandBox/user';
+import Group from '@/utils/sandBox/group';
 import { mapGetters } from 'vuex';
 export default {
   name: 'k-sb-message',
   data() {
     return {
-      admin: new Administrators(),
-      groupRole: null
+      admin: new Administrators()
     };
   },
   mixins: [tranRoleMixin],
@@ -60,18 +61,6 @@ export default {
     avatar: {
       type: String,
       default: ''
-    },
-    chatTarget: {
-      type: Object,
-      default() {
-        return null;
-      }
-    },
-    memberList: {
-      type: Array,
-      default() {
-        return [];
-      }
     }
   },
   methods: {
@@ -98,31 +87,35 @@ export default {
         this.$emit('replyMsg', this.message);
       }
     },
-    getSenderRoleFn() {
-      if (this.chatTarget.isGroup) {
-        const sender = this.memberList.find(({ id }) => id === this.message.role);
-        this.groupRole = sender;
-      }
-    },
     getUserMenuItems() {
       if (this.chatTarget.isGroup) {
         const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
         const targetUser = this.memberList.find(({ id }) => id === this.message.role);
-        return getVisibleMenuItems(curUer, targetUser);
+        const group = new Group({ id: this.chatTarget.id });
+        return getVisibleMenuItems(curUer, targetUser, group);
       }
       return [];
+    },
+    viewUserProfile() {
+      const targetUser = this.admin.getUserById(this.message.role);
+      this.$emit('handleMenuAction', {
+        targetUser,
+        actionType: 'VIEW_PROFILE'
+      });
     }
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
     getUserNickname() {
+      let nickname;
       if (this.message.role === 'self') {
-        return this.getCurrentUser.name;
+        nickname = this.getCurrentUser.name;
       } else if (this.message.role === 'friend') {
-        return this.admin.getUserById(this.message.sender).name;
+        nickname = this.admin.getUserById(this.message.sender).name;
       } else {
-        return this.admin.getUserById(this.message.role).name;
+        nickname = this.admin.getUserById(this.message.role).name;
       }
+      return nickname || 'u3';
     },
     getTextMenus() {
       if (this.isSelf) {
@@ -133,11 +126,18 @@ export default {
       } else {
         return [{ label: '回复消息', task: 1 }];
       }
+    },
+    getGroupSenderRole() {
+      const fail = { role: 'expellee', id: '未知' };
+      if (this.chatTarget.isGroup) {
+        const role = this.memberList.find(({ id }) => id === this.message.role);
+        return role || fail;
+      }
+      return fail;
+    },
+    getRole() {
+      return this.tranRoleFn(this.getGroupSenderRole.role);
     }
-  },
-  created() {
-    this.getSenderRoleFn();
-    // console.log('message', this.groupRole);
   },
   mounted() {}
 };
@@ -192,6 +192,10 @@ export default {
         .super-admin {
           background: var(--sb-super-admin-bg);
           color: var(--sb-super-admin-color);
+        }
+        .expellee {
+          background: var(--sb-reply-bg);
+          color: var(--sb-reply-color);
         }
       }
       .content {

@@ -1,5 +1,5 @@
 import Vue from 'vue';
-console.error('store 删除用户、清空群里等mutations待完善！');
+console.error();
 export default {
   // 用户
   ADD_USER(state, user) {
@@ -8,6 +8,7 @@ export default {
       return false;
     } else {
       state.users.push(user);
+      state.registeredUsersCount++;
       return true;
     }
   },
@@ -28,27 +29,28 @@ export default {
       }
     ]);
   },
-  UPDATE_USER(state, user) {
-    console.log('需要被更新的用户', user);
-    state.users = state.users.map((dbUser) => {
-      if (dbUser.id === user.id) {
-        return user;
-      } else {
-        return dbUser;
-      }
-    });
+  REMOVE_FRIEND(state, { fid, id }) {
+    const userIndex = state.users.findIndex((u) => u.id === id);
+    if (userIndex === -1) return false;
+
+    const friendIndex = state.users[userIndex].friends.findIndex((f) => f.id === fid);
+    if (friendIndex === -1) return false;
+
+    if (Array.isArray(state.currentMsg) && state.currentMsg !== null) {
+      state.currentMsg = null;
+    }
+    state.users[userIndex].friends.splice(friendIndex, 1);
+    return true;
   },
   REMOVE_USER(state, id) {
-    const hasUser = state.users.length && state.users.some((user) => user.id === id);
-    if (hasUser) {
-      state.users = state.users.filter((user) => user.id !== id);
-    } else {
-      console.log(`用户${id}不存在`);
-      return false;
+    const userIndex = state.users.findIndex((user) => user.id === id);
+    if (userIndex <= -1) return console.log(`用户${id}不存在`);
+    if (state.currentUser.id === id) {
+      state.currentMsg = null;
+      state.currentUser = state.users[0] || null;
     }
-  },
-  CLEAR_USERS(state) {
-    state.users = [];
+
+    state.users.splice(userIndex, 1);
   },
 
   // 群组
@@ -63,25 +65,42 @@ export default {
   REMOVE_GROUP(state, id) {
     if (!state.groups.length) return false;
     const group = state.groups.find((group) => group.id === id);
+
     group.members.forEach((member) => {
       const user = state.users.find((user) => user.id === member.id);
       const user_group_index = user.groups.findIndex((group) => group.id === id);
       user.groups.splice(user_group_index, 1);
     });
+
     const groupIndex = state.groups.findIndex((group) => group.id === id);
-    state.groups.splice(groupIndex, 1);
+    if (groupIndex > -1) state.groups.splice(groupIndex, 1);
+
+    const currentMsg = state.currentMsg;
+    if (!Array.isArray(currentMsg) && currentMsg !== null) {
+      currentMsg.id === id && (state.currentMsg = null);
+    }
   },
-  CLEAR_GROUPS(state) {
-    state.groups = [];
-  },
-  // 设置群聊管理员
   SET_GROUP_ADMIN(state, { gid, mid }) {
     const group = state.groups.find((group) => group.id === gid);
+    if (!group) return false;
     group.admins.push(mid);
     group.members.find((member) => member.id === mid).role = 'admin';
 
     const user = state.users.find((user) => user.id === mid);
     user.groups.find((group) => group.id === gid).role = 'admin';
+  },
+  REVOKE_GROUP_ADMIN(state, { gid, mid }) {
+    const group = state.groups.find((group) => group.id === gid);
+    if (!group) return false;
+
+    const adminIndex = group.admins.findIndex((admin) => admin === mid);
+    if (adminIndex > -1) group.admins.splice(adminIndex, 1);
+
+    const memberIndex = group.members.findIndex((member) => member.id === mid);
+    if (memberIndex > -1) group.members[memberIndex].role = 'member';
+
+    const user = state.users.find((user) => user.id === mid);
+    user.groups.find((group) => group.id === gid).role = 'member';
   },
   ADD_MEMBER(state, { gid, uid, role }) {
     const group = state.groups.find((group) => group.id === gid);
@@ -93,6 +112,28 @@ export default {
     group.members.push({ id: uid, role });
     member.groups.push({ id: gid, role });
   },
+  REMOVE_MEMBER(state, { gid, mid }) {
+    const group = state.groups.find((group) => group.id === gid);
+    if (!group) return console.error('群组不存在', gid);
+
+    // 判断用户是否存在
+    const userIndex = state.users.findIndex((user) => user.id === mid);
+    if (userIndex === -1) return console.error('用户不存在', mid);
+
+    // 移除用户群聊列表中的群组
+    const user = state.users[userIndex];
+    const groupIndex = user.groups.findIndex((g) => g.id === gid);
+    if (groupIndex !== -1) user.groups.splice(groupIndex, 1);
+
+    // 判断是否为管理员
+    const adminIndex = group.admins.findIndex((admin) => admin === mid);
+    if (adminIndex > -1) group.admins.splice(adminIndex, 1);
+
+    // 移除群组中的用户
+    const memberIndex = group.members.findIndex((m) => m.id === mid);
+    if (memberIndex === -1) return console.error('群组成员不存在', mid);
+    group.members.splice(memberIndex, 1);
+  },
 
   // 消息
   CREATE_PRIVATE_MESSAGE(state, id) {
@@ -101,7 +142,7 @@ export default {
       console.log('私聊消息已存在');
       return false;
     }
-    state.privateMsg[id] = {};
+    Vue.set(state.privateMsg, id, {});
   },
   INIT_PRIVATE_MESSAGE(state, { id, fid }) {
     const selfMsg = state.privateMsg[id];
@@ -117,6 +158,7 @@ export default {
     if (!msgId) return (state.privateMsg[sender][receiver] = []);
 
     const index = state.privateMsg[sender][receiver].findIndex((msg) => msg.id === msgId);
+    if (index > -1) return console.log('没有此消息');
     state.privateMsg[sender][receiver].splice(index, 1);
   },
   CREATE_GROUP_MESSAGE(state, group) {
@@ -173,7 +215,9 @@ export default {
   },
   CLEAR_GROUP_MESSAGE(state, id) {
     // 清空指定群聊消息
-    if (id) return Vue.delete(state.groupMsg, id);
+    if (id) {
+      return Vue.delete(state.groupMsg, id);
+    }
 
     // 清空所有群聊消息
     Vue.set(state, 'groupMsg', {});
@@ -182,14 +226,11 @@ export default {
   // 用户切换
   SWITCH_USER(state, id) {
     if (id) {
-      if (id !== state.currentUser?.id) {
-        const targetUser = state.users.find((user) => user.id === id);
-        console.log(targetUser);
-        state.currentUser = targetUser || null;
-      }
-    } else {
-      if (state.currentUser === null) state.currentUser = state.users[0];
+      const targetUser = state.users.find((user) => user.id === id);
+      state.currentUser = targetUser || null;
+      return;
     }
+    if (state.currentUser === null) state.currentUser = state.users[0];
   },
 
   // 切换对话窗口

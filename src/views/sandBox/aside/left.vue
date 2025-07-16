@@ -38,20 +38,20 @@
           >
             <pps-context-menu
               :menus="[{ label: '发起群聊', uid: `${user.id}`, task: 1 }]"
-              @select.stop="contextMenuFn"
+              @select="contextMenuFn"
             >
               <template slot="prepend">
                 <el-tooltip class="item" effect="dark" content="账户信息" placement="top">
-                  <pps-icon icon="pps-icon-account" @click.stop="showUserDetailFn(user)"></pps-icon>
+                  <pps-icon icon="pps-icon-account" @click="showUserDetailFn(user)"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="好友" placement="top">
-                  <pps-icon icon="pps-icon-contact" @click.stop="show.friendList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-contact" @click="show.friendList = true"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="群聊" placement="top">
-                  <pps-icon icon="pps-icon-group" @click.stop="show.groupList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-group" @click="show.groupList = true"></pps-icon>
                 </el-tooltip>
               </template>
-              <div class="delete-user" slot="append">
+              <div v-if="!user.isSuper" class="delete-user" slot="append">
                 <div @click="contextMenuFn({ uid: `${user.id}`, task: 2 })">
                   {{ `移除 ${user.name}` }}
                 </div>
@@ -61,13 +61,15 @@
                   class="menu-item"
                   v-for="(item, index) in menu"
                   :key="index"
-                  @click.stop="contextMenuFn(item)"
+                  @click="contextMenuFn(item)"
                 >
                   {{ item.label }}
                 </div>
               </template>
               <div class="user-avatar" slot="content">
-                <pps-avatar :src="user.avatar" size="40"></pps-avatar>
+                <el-tooltip class="item" effect="dark" :content="user.name" placement="right">
+                  <pps-avatar :src="user.avatar" size="40"></pps-avatar>
+                </el-tooltip>
               </div>
             </pps-context-menu>
           </k-menu-item>
@@ -276,6 +278,17 @@
           </el-table-column>
           <el-table-column align="center" prop="id" label="id"></el-table-column>
           <el-table-column align="center" prop="name" label="昵称"></el-table-column>
+          <el-table-column align="center" label="操作">
+            <template slot-scope="{ row }">
+              <pps-button
+                :disabled="row.id === 'user-super-admin'"
+                theme="danger"
+                @click="removeFriendFn(row.id)"
+              >
+                删除
+              </pps-button>
+            </template>
+          </el-table-column>
         </el-table>
       </template>
     </pps-dialog>
@@ -412,14 +425,15 @@ export default {
   },
   methods: {
     switchUserFn(id) {
+      if (this.getCurrentUser.id === id) return;
       this.$store.commit('sandBox/SWITCH_USER', id);
       this.$refs.msgMenuRef.activeIndex = null;
       this.$store.commit('sandBox/SWITCH_CHAT', { id });
-      console.log('switchUser');
     },
     removeUserFn(id) {
       const admin = new Administrators();
       admin.removeUserById(id);
+      this.$store.commit('sandBox/SWITCH_USER');
     },
     createUserFn() {
       const adder = this.createUser;
@@ -543,6 +557,10 @@ export default {
           // this.tableData = admin.getAllRobots();
           break;
       }
+    },
+    removeFriendFn(fid) {
+      const user = new User(this.getCurrentUser);
+      user.removeFriendById(fid);
     },
     emitTabUpdate() {
       this.$refs['k-tab'].changeTabFn();

@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 
 const ROLE_SELF = 'self';
 const ROLE_FRIEND = 'friend';
-console.error('user: 删除群聊方法待完善！');
+console.error('user: 用户头像功能待完善！');
 // 用户类
 /**
  * @description: 用户类
@@ -17,7 +17,8 @@ export default class User {
     this.numId = numId;
     this.age = age;
     this.sex = sex;
-    this.avatar = avatar || `https://picsum.photos/id/${name}/200/200`;
+    this.order = store.state.sandBox.registeredUsersCount;
+    this.avatar = avatar || `https://picsum.photos/id/${this.order}/50/50`;
     this.groups = [];
     this.friends = [];
   }
@@ -93,21 +94,11 @@ export default class User {
    * @param {*} friendId 好友id
    */
   removeFriendById(fid) {
-    const friend = store.getters['sandBox/getUserById'](fid);
-    const self = store.getters['sandBox/getUserById'](this.id);
-    const hasFriend = self.friends.some((friendItem) => friendItem.id === fid);
-    if (!hasFriend) return false;
-    this.deleteFriendMessage(fid);
-    self.friends = self.friends.filter((friendItem) => friendItem.id !== fid);
-    this.receiveRemoveFriend(self, friend);
-    return true;
-  }
-
-  receiveRemoveFriend(self, friend) {
-    friend.friends = friend.friends.filter((friendHandle) => {
-      return friendHandle.id !== self.id;
-    });
-    console.log(`${self.name}已从${friend.name}的好友列表中移除`);
+    const res = this.deleteFriendMessage(fid);
+    if (!res) console.log('删除信息失败');
+    const delRes1 = store.commit('sandBox/REMOVE_FRIEND', { fid, id: this.self().id });
+    store.commit('sandBox/REMOVE_FRIEND', { fid: this.self().id, id: fid });
+    console.log(delRes1);
   }
 
   /**
@@ -154,32 +145,29 @@ export default class User {
    * @param {*} gid 群组id
    */
   addGroupById(gid) {
-    const groupData = store.getters['sandBox/getGroupById'](gid);
-    if (!groupData) return false;
-    const group = new Group(groupData);
+    const group = new Group({ id: gid });
+    const hasGroup = group.self();
+    if (!hasGroup) return errorLogFn('User: 群组不存在');
     const hasMember = group.getAllMember().some((member) => member.id === this.id);
-    if (hasMember) return false;
+    if (hasMember) return errorLogFn('User: 群组已加入');
     group.addMember({ uid: this.id, role: 'member' });
     return true;
   }
 
   /**
    * 邀请用户加入群组
-   * @param {*} param0 { groupId：群组id, invitee：被邀请人id, role：角色 }
+   * @param {*} param0 { groupId：群组id, invitee：被邀请人id }
    */
-  inviteUserToGroup({ groupId, invitee, role = 'member' }) {
-    const group = store.getters['sandBox/getGroupById'](groupId);
+  inviteUserToGroup({ groupId, invitee }) {
+    const group = new Group({ id: groupId });
+    const hasGroup = group.self();
     const normalizeInvitee = this._memberNormalize(invitee);
-    const hasSelf = group.members.some((m) => m.id === this.id);
-    if (!group || !hasSelf) return false;
-    const isLord = group.lord === this.id;
-    const roleHandle = isLord ? role : 'member';
+    const hasSelf = group.getMemberById(this.id);
+    if (!hasGroup || !hasSelf) return errorLogFn('User: 群组不存在或您不是群主');
     normalizeInvitee.forEach((invitee) => {
-      const hasMember = group.members.some((m) => m.id === invitee.id);
-      if (hasMember) return false;
-      if (roleHandle === 'admin') group.admins.push(invitee.id);
-      group.members.push({ id: invitee.id, role: roleHandle });
-      invitee.groups.push({ id: groupId, role: roleHandle });
+      const hasMember = group.getMemberById(invitee.id);
+      if (hasMember) return errorLogFn('User: 该用户已加入群组');
+      group.addMember({ uid: invitee.id, role: 'member' });
     });
     return true;
   }
@@ -191,8 +179,7 @@ export default class User {
   leaveGroupById(gid) {
     const group = store.getters['sandBox/getGroupById'](gid);
     if (!group) return false;
-    this.self().groups = this.self().groups.filter((group) => group.id !== gid);
-    group.members = group.members.filter((member) => member.id !== this.id);
+    store.commit('sandBox/REMOVE_MEMBER', { gid, mid: this.self().id });
     return true;
   }
 
@@ -202,14 +189,11 @@ export default class User {
    */
   kickMemberById({ groupId, expellee }) {
     const group = store.getters['sandBox/getGroupById'](groupId);
-    const exp = store.getters['sandBox/getUserById'](expellee);
-    if (!group || !exp || expellee === this.id) return false;
-    if (!this._isAdmin(groupId)) return false;
+    const exp = group.members.some((m) => m.id === expellee);
+    if (!group || !exp || expellee === this.id) return errorLogFn('User: 信息错误');
+    if (!this._isAdmin(groupId)) return errorLogFn('User: 不是管理员');
     if (group.admins.some((ad) => ad === expellee) || group.lord === expellee) return false;
-    // const isLord = group.lord === this.id;
-    // if (!isLord) return false;
-    exp.groups = exp.groups.filter((g) => g.id !== groupId);
-    group.members = group.members.filter((member) => member.id !== exp.id);
+    store.commit('sandBox/REMOVE_MEMBER', { gid: groupId, mid: expellee });
     return true;
   }
 
@@ -245,7 +229,7 @@ export default class User {
    * @param {*} fid 好友id
    * @param {*} msgId 消息id
    */
-  deleteFriendMessage(fid, msgId) {
+  deleteFriendMessage(fid, msgId = null) {
     if (!this.self().friends.some((friend) => friend.id === fid)) return false;
     store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: fid, receiver: this.id, msgId });
     store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: this.id, receiver: fid, msgId });
@@ -282,14 +266,14 @@ export default class User {
    */
   deleteGroupMessage({ id, msgId }) {
     const group = store.getters['sandBox/getGroupById'](id);
-    if (!group) return false;
+    if (!group) return errorLogFn('User: 群组不存在');
     const hasMember = group.members.some((member) => member.id === this.id);
-    if (!hasMember) return false;
+    if (!hasMember) return errorLogFn('User: 非群组成员');
     const groupMsg = store.getters['sandBox/getGroupMessage'](id);
     const hasMessage = groupMsg.messages.some((message) => message.id === msgId);
-    if (!hasMessage) return false;
+    if (!hasMessage) return errorLogFn('User: 消息不存在');
     const isMyMessage = groupMsg.messages.find((message) => message.id === msgId).role === this.id;
-    if (!this._isAdmin(id) && !isMyMessage) return false;
+    if (!this._isAdmin(id) && !isMyMessage) return errorLogFn('User: 非管理员或消息作者');
     store.commit('sandBox/DEL_GROUP_MESSAGE', { id, msgId });
     return true;
   }
@@ -300,7 +284,7 @@ export default class User {
    * @param {*} isMute 是否禁言
    */
   handleMuteGroupById(gid, isMute) {
-    if (!this._isAdmin(gid)) return false;
+    if (!this._isAdmin(gid)) return errorLogFn('User: 群组权限不足');
     store.commit('sandBox/HANDLE_MUTE_GROUP', { gid, isMute });
     return true;
   }
@@ -332,13 +316,28 @@ export default class User {
    * @param {*} param0 { gid：群组id, mid：成员id }
    */
   setGroupAdmin({ gid, mid }) {
-    if (!this._isAdmin(gid)) return false;
-    if (this.self().groups.role === 'lord') return false;
+    if (!this.isLord(gid)) return false;
     const group = this.getGroupById(gid);
-    if (!group.members.some(({ id }) => id === mid)) return false;
     if (group.lord === mid) return false;
+    if (!group.members.some(({ id }) => id === mid)) return false;
     if (group.admins.some((id) => id === mid)) return false;
     store.commit('sandBox/SET_GROUP_ADMIN', { gid, mid });
+    return true;
+  }
+
+  /**
+   * 撤销群组管理员
+   * @param {string} gid 群组id
+   * @param {string} mid 成员id
+   * @returns {boolean} 是否成功
+   */
+  revokeGroupAdmin(gid, mid) {
+    if (!this.isLord(gid)) return false;
+    const group = this.getGroupById(gid);
+    if (!group.members.some(({ id }) => id === mid)) return false;
+    if (!group.admins.some((id) => id === mid)) return false;
+    const res = store.commit('sandBox/REVOKE_GROUP_ADMIN', { gid, mid });
+    console.log(res);
     return true;
   }
 
@@ -399,11 +398,23 @@ export default class User {
    * @param {String} gid
    * @return {Boolean}
    */
-  _isAdmin(gid) {
+  _isAdmin(gid, uid) {
     const group = store.getters['sandBox/getGroupById'](gid);
-    const id = this.self().id;
-    const isAdmin =
-      group.admins.some((ad) => ad === id) || group.lord === id || this.self().isSuper;
+    const id = uid || this.id;
+    const isLord = group.lord === id || this.self().isSuper;
+    const isAdmin = group.admins.some((ad) => ad === id) || isLord;
     return isAdmin;
   }
+
+  isLord(gid, uid) {
+    const group = store.getters['sandBox/getGroupById'](gid);
+    const id = uid || this.id;
+    const isLord = group.lord === id || this.self().isSuper;
+    return isLord;
+  }
 }
+
+const errorLogFn = (error) => {
+  console.error(error);
+  return false;
+};

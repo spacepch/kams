@@ -1,6 +1,6 @@
 import Group from '../group';
+import User from '../user';
 import store from '@/store';
-
 export default class Administrators {
   constructor(currentUser = null) {
     store.commit('sandBox/SWITCH_USER', currentUser);
@@ -17,18 +17,17 @@ export default class Administrators {
 
   removeUserById(id) {
     const user = this.getUserById(id);
+    const u = new User({ id });
+    user.groups.forEach((group) => {
+      if (group.role === 'lord') return u.removeGroupById(group.id);
+      if (group.role === 'admin') return u.leaveGroupById(group.id);
+      store.commit('sandBox/REMOVE_MEMBER', { gid: group.id, mid: id });
+    });
     user.friends.forEach((friend) => {
-      store.commit('sandBox/DEL_PRIVATE_MESSAGE', { sender: friend.id, receiver: id });
-      const friendObj = store.getters['sandBox/getUserById'](friend.id);
-      friendObj.friends = friendObj.friends.filter((friend) => friend.id !== id);
+      store.commit('sandBox/REMOVE_FRIEND', { fid: id, id: friend.id });
     });
     store.commit('sandBox/CLEAR_USER_MESSAGE', id);
     store.commit('sandBox/REMOVE_USER', id);
-    const groups = user.groups;
-    groups.forEach((group) => {
-      const g = store.getters['sandBox/getGroupById'](group.id);
-      g.members = g.members.filter((member) => member.id !== id);
-    });
   }
 
   clearUSer() {

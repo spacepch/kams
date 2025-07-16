@@ -14,6 +14,7 @@ const superAdmin = {
 export default {
   namespaced: true,
   state: {
+    registeredUsersCount: 0,
     users: [superAdmin],
     currentUser: {},
     currentMsg: null,

@@ -25,16 +25,18 @@ export default class Group {
   }
 
   getAllMember() {
-    // console.log('group', this.self());
-    return this.self().members.map((member) => {
-      const user = store.getters['sandBox/getUserById'](member.id);
-      const { id, avatar, name, sex, age, numId } = user;
-      return { role: member.role, id, avatar, name, sex, age, numId };
+    return this.self().members.map(({ id, role }) => {
+      const user = store.getters['sandBox/getUserById'](id);
+      return { ...user, role };
     });
   }
 
   getMemberById(id) {
-    return this.getAllMember().find((member) => member.id === id);
+    return this.getAllMember().find((member) => member.id === id) || null;
+  }
+
+  getAllMessage() {
+    return store.getters['sandBox/getGroupMessage'](this.id);
   }
 
   addMember({ uid, role }) {

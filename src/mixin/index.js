@@ -44,12 +44,27 @@ export const userFullScreen = {
 };
 
 export const tranRoleMixin = {
+  props: {
+    chatTarget: {
+      type: Object,
+      default() {
+        return null;
+      }
+    },
+    memberList: {
+      type: Array,
+      default() {
+        return [];
+      }
+    }
+  },
   methods: {
     tranRoleFn(role) {
       const roleMap = {
         lord: '群主',
         admin: '管理员',
-        'super-admin': '超级管理员'
+        'super-admin': '超级管理员',
+        expellee: '已退群'
       };
       return roleMap[role] || '';
     },
@@ -57,7 +72,11 @@ export const tranRoleMixin = {
       const { uid, task, key } = menu;
       if (task) {
         const user = this.admin.getUserById(uid);
-        this.$emit('handleMenuAction', { targetUser: user, actionType: key });
+        this.$emit('handleMenuAction', {
+          targetUser: user,
+          actionType: key,
+          groupId: this.chatTarget.id
+        });
       }
     }
   }

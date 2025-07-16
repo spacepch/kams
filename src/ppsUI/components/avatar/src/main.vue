@@ -1,5 +1,5 @@
 <template>
-  <div class="pps-avatar">
+  <div class="pps-avatar" v-on="$listeners">
     <a v-if="href" class="pps-avatar-link" :href="href" title="" :target="href ? '_blank' : ''">
       <img :src="src" alt="" class="pps-avatar-img" :width="`${size}px`" />
     </a>

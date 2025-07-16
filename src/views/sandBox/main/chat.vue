@@ -26,10 +26,19 @@
           @keyup="saveRange"
           @keypress.enter="sendMessageFn"
           @blur="lastRange = null"
-          contenteditable="true"
-        ></div>
+          :contenteditable="messagingEnabled"
+        >
+          {{ messagingEnabled ? null : '禁言中...' }}
+        </div>
         <div v-if="replyMsg" class="reply-chat">{{ replyMsg.name }}：{{ replyMsg.content }}</div>
-        <pps-button class="k-chat-send-btn" theme="confirm" @click="sendMessageFn">发送</pps-button>
+        <pps-button
+          :disabled="!messagingEnabled"
+          @click="sendMessageFn"
+          theme="confirm"
+          class="k-chat-send-btn"
+        >
+          发送
+        </pps-button>
         <button @click="setGroupAdminFn">设置管理员</button>
       </div>
     </template>
@@ -101,10 +110,14 @@ export default {
         this.lastRange = selection.getRangeAt(0);
       }
     },
-    setGroupAdminFn() {
+    async setGroupAdminFn() {
+      const { value: mid } = await this.$prompt('请输入群成员id', '设置群管理员', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      });
       const res = new User(this.getCurrentUser).setGroupAdmin({
         gid: this.chatTarget.id,
-        mid: 'user-1'
+        mid
       });
       console.log(res);
     },
@@ -178,7 +191,6 @@ export default {
       const name = this.admin.getUserById(msg.role).name;
       this.replyMsg = { name, ...msg };
       this.$refs.input.focus();
-      console.log(this.replyMsg);
     },
     handleMenuAction(action) {
       this.$emit('handleMenuAction', action);
@@ -186,10 +198,16 @@ export default {
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
-    getlord() {
-      const user = new User(this.getCurrentUser);
-      const g = user.getGroupById(this.chatTarget.id);
-      return g.lord;
+    messagingEnabled() {
+      if (this.chatTarget.isGroup) {
+        const curMember = new User(this.getCurrentUser);
+        const isAdmin = curMember._isAdmin(this.chatTarget.id);
+        if (isAdmin) return true;
+        const isGroupMute = this.getCurrentMsg.isMute;
+        const isMute = this.getCurrentMsg.muteMembers.includes(curMember.id);
+        return !(isGroupMute || isMute);
+      }
+      return true;
     }
   },
   watch: {
@@ -211,7 +229,6 @@ export default {
     }
   },
   mounted() {
-    // console.log(this.messageList);
     if (this.$refs.input) {
       this.$refs.input.focus();
     }

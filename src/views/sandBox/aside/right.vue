@@ -3,7 +3,12 @@
     <div class="title">群聊成员</div>
     <template #inner>
       <ul class="member-list">
-        <li class="member-item" v-for="(user, index) in memberList" :key="index">
+        <li
+          class="member-item"
+          @click="viewUserProfile(user)"
+          v-for="(user, index) in sortedMemberList"
+          :key="index"
+        >
           <pps-context-menu :menus="getUserMenuItems(user)" @select="avatarContextMenuFn">
             <div class="user-item" slot="content">
               <pps-avatar :src="user.avatar" size="20"></pps-avatar>
@@ -16,7 +21,6 @@
         </li>
       </ul>
     </template>
-    <!-- <button @click="test">console</button> -->
   </k-sb-aside>
 </template>
 
@@ -24,6 +28,7 @@
 import { tranRoleMixin } from '@/mixin/index';
 import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import kSbAside from '@/components/layout/aside';
+import Group from '@/utils/sandBox/group';
 // import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import { mapGetters } from 'vuex';
@@ -32,20 +37,6 @@ export default {
   components: {
     kSbAside
   },
-  props: {
-    chatTarget: {
-      type: [Object, Boolean],
-      default() {
-        return null;
-      }
-    },
-    memberList: {
-      type: Array,
-      default() {
-        return [];
-      }
-    }
-  },
   mixins: [tranRoleMixin],
   data() {
     return {
@@ -53,20 +44,43 @@ export default {
     };
   },
   methods: {
-    test() {
-      console.log('test', this.getMemberList);
-    },
     getUserMenuItems(user) {
       const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
-      return getVisibleMenuItems(curUer, user);
+      const group = new Group({ id: this.chatTarget.id });
+      const menu = getVisibleMenuItems(curUer, user, group);
+      return menu;
     },
-    handleMenuAction() {}
+    handleMenuAction() {},
+    viewUserProfile(user) {
+      this.$emit('handleMenuAction', {
+        targetUser: user,
+        actionType: 'VIEW_PROFILE'
+      });
+    }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser'])
+    ...mapGetters('sandBox', ['getCurrentUser']),
+    sortedMemberList() {
+      // 角色优先级映射
+      const rolePriorityMap = new Map([
+        ['super-admin', 0],
+        ['lord', 1],
+        ['admin', 2],
+        ['member', 3]
+      ]);
+      // 获取权重值
+      const getPriority = (role) => {
+        return rolePriorityMap.has(role) ? rolePriorityMap.get(role) : 4;
+      };
+      // 排序
+      const sortedMemberList = [...this.memberList].sort((a, b) => {
+        return getPriority(a.role) - getPriority(b.role);
+      });
+      return sortedMemberList;
+    }
   },
   mounted() {
-    // console.log(this.memberList);
+    // console.log(this.sortedMemberList);
   }
 };
 </script>
@@ -83,6 +97,7 @@ export default {
 
   &::v-deep .pps-context-menu-area {
     width: 100%;
+    padding: 8px;
   }
 
   &::v-deep .k-aside-inner {
@@ -98,7 +113,6 @@ export default {
 
     .member-item {
       display: flex;
-      padding: 8px;
       cursor: pointer;
       &:hover {
         background: var(--sb-reply-bg);

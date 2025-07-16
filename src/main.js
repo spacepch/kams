@@ -13,6 +13,7 @@ import 'less';
 import 'sass'
 import '@/assets/index.less';
 import '@/assets/global.less';
+import '@/assets/layui/layui.css';
 import 'vue-web-terminal/lib/theme/dark.css';
 import resize from '@/directives/resizeOb';
 import transTime from '@/directives/transTime';
