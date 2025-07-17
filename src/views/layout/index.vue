@@ -3,7 +3,7 @@
     <k-aside></k-aside>
     <el-container direction="vertical">
       <k-header></k-header>
-      <el-main :class="{ isPadding, lessPadding: isSmall }">
+      <el-main :class="{ isPadding, lessPadding: getIsNarrowScreen }">
         <transition mode="out-in">
           <keep-alive include="kConsole">
             <router-view></router-view>
@@ -28,9 +28,7 @@ export default {
   name: 'myLayout',
   components: { kAside, kFooter, kHeader },
   data() {
-    return {
-      isSmall: false
-    };
+    return {};
   },
   methods: {
     handleAside() {
@@ -41,10 +39,10 @@ export default {
       }
     },
     resizeFn(w, h) {
-      if (Math.floor(w) <= 428) {
-        this.isSmall = true;
+      if (Math.floor(w) <= 528) {
+        this.$store.commit('layoutOption/updateIsNarrowScreen', true);
       } else {
-        this.isSmall = false;
+        this.$store.commit('layoutOption/updateIsNarrowScreen');
       }
     },
     async isVersionLatest() {
@@ -91,7 +89,7 @@ export default {
       .catch(() => {});
   },
   computed: {
-    ...mapGetters('layoutOption', ['getIsFoldAside']),
+    ...mapGetters('layoutOption', ['getIsFoldAside', 'getIsNarrowScreen']),
     isPadding() {
       if (uniqueRoutes.includes(this.$route.fullPath)) {
         return true;

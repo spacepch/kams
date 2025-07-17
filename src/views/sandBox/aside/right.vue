@@ -1,5 +1,5 @@
 <template>
-  <k-sb-aside class="aside-group">
+  <k-sb-aside class="aside-group" v-if="!getIsNarrowScreen">
     <div class="title">群聊成员</div>
     <template #inner>
       <ul class="member-list">
@@ -60,6 +60,7 @@ export default {
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser']),
+    ...mapGetters('layoutOption', ['getIsNarrowScreen']),
     sortedMemberList() {
       // 角色优先级映射
       const rolePriorityMap = new Map([
@@ -121,6 +122,7 @@ export default {
   }
   .user-item {
     display: flex;
+    // flex-grow: 1;
     width: 100%;
 
     .user-name {

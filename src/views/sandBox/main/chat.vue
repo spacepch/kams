@@ -39,7 +39,6 @@
         >
           发送
         </pps-button>
-        <button @click="setGroupAdminFn">设置管理员</button>
       </div>
     </template>
     <el-empty v-else description="" style="height: 100%" :image="LOGO"></el-empty>
@@ -58,7 +57,6 @@ export default {
   data() {
     return {
       LOGO,
-      messageList: [],
       message: '',
       lastRange: null,
       replyMsg: null,
@@ -208,20 +206,21 @@ export default {
         return !(isGroupMute || isMute);
       }
       return true;
+    },
+    messageList() {
+      const cmsg = this.getCurrentMsg;
+      if (!cmsg) return [];
+      let messageList;
+      if (Array.isArray(cmsg)) {
+        messageList = cmsg;
+      } else {
+        messageList = cmsg.messages;
+      }
+      return messageList;
     }
   },
   watch: {
     getCurrentMsg(val) {
-      if (!val) {
-        // 处理消息为空的情况
-        this.messageList = [];
-        return;
-      }
-      if (Array.isArray(val)) {
-        this.messageList = val;
-      } else {
-        this.messageList = val.messages;
-      }
       this.replyMsg = null;
       if (this.$refs.input) {
         this.$refs.input.focus();

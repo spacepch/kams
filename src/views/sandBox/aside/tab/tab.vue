@@ -24,6 +24,12 @@ export default {
       default() {
         return [];
       }
+    },
+    defaultActive: {
+      type: Number,
+      default() {
+        return 0;
+      }
     }
   },
   data() {
@@ -43,7 +49,7 @@ export default {
     }
   },
   mounted() {
-    this.changeTabFn();
+    this.changeTabFn(this.defaultActive);
   }
 };
 </script>

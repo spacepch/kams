@@ -3,6 +3,7 @@ export default {
   state: {
     token: '',
     isFoldAside: false,
+    isNarrowScreen: false,
     host: '',
     port: '',
     protocol: '',
@@ -15,6 +16,9 @@ export default {
     },
     updateIsFoldAside(state, val = false) {
       state.isFoldAside = val;
+    },
+    updateIsNarrowScreen(state, val = false) {
+      state.isNarrowScreen = val;
     },
     updateHost(state, val = '') {
       state.host = val;
@@ -37,6 +41,9 @@ export default {
   getters: {
     getIsFoldAside(state) {
       return state.isFoldAside;
+    },
+    getIsNarrowScreen(state) {
+      return state.isNarrowScreen;
     }
   }
 };

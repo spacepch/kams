@@ -219,6 +219,11 @@ export default {
   },
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');
+    if (this.getCurrentMsg.id) {
+      this.updateChatTargetFn(this.getCurrentMsg.id, true);
+    } else {
+      this.updateChatTargetFn(null, false);
+    }
   }
 };
 </script>
@@ -252,11 +257,6 @@ export default {
 .k-chat-header-title {
   font-size: 16px;
   font-style: normal;
-}
-@media screen and (max-width: 1000px) {
-  .aside-group {
-    // display: none;
-  }
 }
 .aside-group,
 .aside-users {

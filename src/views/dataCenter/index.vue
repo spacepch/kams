@@ -1,5 +1,5 @@
 <template>
-  <div class="root" v-resize-ob="resizeHandler">
+  <div class="root" v-resize-ob:200="resizeHandler">
     <el-card class="banner-card">
       <el-row type="flex" justify="left">
         <el-col style="margin-left: 10px">
@@ -229,10 +229,8 @@ export default {
     },
     resizeHandler() {
       if (this.curveChart && this.columnChart) {
-        setTimeout(() => {
-          this.curveChart.resize();
-          this.columnChart.resize();
-        }, 200);
+        this.curveChart.resize();
+        this.columnChart.resize();
       }
     },
     async getStatsFn() {
@@ -364,7 +362,7 @@ export default {
   }
 }
 
-.banner-card{
+.banner-card {
   margin-top: 10px;
 }
 </style>

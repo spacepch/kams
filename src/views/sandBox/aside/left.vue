@@ -90,6 +90,7 @@
           <k-tab
             :tabs="['私聊', '群聊']"
             @changeTab="toggleMsgTabFn"
+            :default-active="messageMode"
             :class="{ isTransparent: !show.isCollapseMsg }"
           ></k-tab>
           <el-tooltip effect="dark" content="加好友/群" placement="bottom">
@@ -124,7 +125,7 @@
           <k-menu
             class="list"
             ref="msgMenuRef"
-            :default-active="null"
+            :default-active="getDefaultActive"
             :key="messageList[0]?.id"
             @select="selectMsgFn"
             active-color="#fff"
@@ -605,6 +606,7 @@ export default {
       } else {
         chat = user.getFriendMessageById(index);
         this.$store.commit('sandBox/SWITCH_CHAT', { msg: chat, id: index });
+        console.log('修改chattarget', index);
         this.updateChatTarget(index, false);
       }
       this.$emit('switchMsg', chat);
@@ -616,7 +618,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser']),
+    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
     isAdded() {
       const curUser = this.getCurrentUser;
       const type = this.searchDialog.index;
@@ -636,6 +638,14 @@ export default {
       } else {
         return user.getAllFriend();
       }
+    },
+    getDefaultActive() {
+      const msg = this.getCurrentMsg;
+      if (!msg.id) {
+        const target = msg.find((m) => m.role === 'friend');
+        return target ? target.sender : msg[0].receiver;
+      }
+      return msg.id;
     }
   },
   watch: {
@@ -649,7 +659,9 @@ export default {
       }
     }
   },
-  mounted() {}
+  created() {
+    if (this.getCurrentMsg.id) this.messageMode = 1;
+  }
 };
 </script>
 
@@ -661,6 +673,7 @@ export default {
     width: 60px;
     background-color: #f2f2f2;
     border-bottom: 2px solid #e9e9e9;
+    border-right: 2px solid #e9e9e9;
     z-index: 2;
 
     .k-chat-header {
@@ -774,8 +787,8 @@ export default {
   .aside-list {
     flex-grow: 1;
     background-color: #fff;
-    border: 2px solid #e9e9e9;
-    border-top: none;
+    border-bottom: 2px solid #e9e9e9;
+    border-right: 2px solid #e9e9e9;
 
     .k-chat-header {
       display: flex;
