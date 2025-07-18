@@ -234,7 +234,7 @@
             <el-table
               @selection-change="handleSelectionChange"
               :show-header="true"
-              :data="getCurrentUser.friends"
+              :data="getFriendListExceptSuper"
             >
               <el-table-column type="selection" align="center" label="选择"></el-table-column>
               <el-table-column align="center" label="头像">
@@ -639,6 +639,10 @@ export default {
       } else {
         return user.getAllFriend();
       }
+    },
+    getFriendListExceptSuper() {
+      const list = this.getCurrentUser.friends.filter((friend) => friend.id !== 'user-super-admin');
+      return list;
     }
   },
   watch: {
