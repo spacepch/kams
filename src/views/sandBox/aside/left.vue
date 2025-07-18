@@ -623,11 +623,13 @@ export default {
     isAdded() {
       const curUser = this.getCurrentUser;
       const type = this.searchDialog.index;
+      const target = this.searchDialog.input;
       let isAdded;
       if (type === 0) {
-        isAdded = curUser.friends.some((friend) => friend.id === `user-${this.searchDialog.input}`);
+        if (this.getCurrentUser.id === `user-${target}`) return (isAdded = true);
+        isAdded = curUser.friends.some((friend) => friend.id === `user-${target}`);
       } else if (type === 1) {
-        isAdded = curUser.groups.some((group) => group.id === `group-${this.searchDialog.input}`);
+        isAdded = curUser.groups.some((group) => group.id === `group-${target}`);
       }
       return isAdded;
     },
