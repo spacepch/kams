@@ -234,11 +234,7 @@ export default {
   },
 
   // 切换对话窗口
-  SWITCH_CHAT(state, { msg = null, id }) {
-    if (msg) {
-      state.currentMsg = msg;
-    } else {
-      state.currentMsg = null;
-    }
+  SWITCH_CHAT(state, msg = null) {
+    state.currentMsg = msg;
   }
 };

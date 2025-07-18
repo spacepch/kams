@@ -14,7 +14,9 @@
           <pps-icon icon="pps-icon-side-show"></pps-icon>
         </gray-button>
         <div class="k-chat-header-content">
-          <h1 class="k-chat-header-title">{{ chatTarget.id }}</h1>
+          <h1 class="k-chat-header-title">
+            {{ chatTarget.id }}{{ getGroupMemberLength }}
+          </h1>
         </div>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
@@ -215,15 +217,14 @@ export default {
         return group ? new Group({ id: group.id }).getAllMember() : [];
       }
       return [];
+    },
+    getGroupMemberLength() {
+      return this.chatTarget.isGroup ? `（${this.getMemberList.length}）` : null;
     }
   },
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');
-    if (this.getCurrentMsg.id) {
-      this.updateChatTargetFn(this.getCurrentMsg.id, true);
-    } else {
-      this.updateChatTargetFn(null, false);
-    }
+    this.$store.commit('sandBox/SWITCH_CHAT');
   }
 };
 </script>

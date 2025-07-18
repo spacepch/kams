@@ -90,7 +90,6 @@
           <k-tab
             :tabs="['私聊', '群聊']"
             @changeTab="toggleMsgTabFn"
-            :default-active="messageMode"
             :class="{ isTransparent: !show.isCollapseMsg }"
           ></k-tab>
           <el-tooltip effect="dark" content="加好友/群" placement="bottom">
@@ -125,7 +124,7 @@
           <k-menu
             class="list"
             ref="msgMenuRef"
-            :default-active="getDefaultActive"
+            :default-active="null"
             :key="messageList[0]?.id"
             @select="selectMsgFn"
             active-color="#fff"
@@ -601,12 +600,11 @@ export default {
       let chat;
       if (this.messageMode) {
         chat = user.getGroupMessageById(index);
-        this.$store.commit('sandBox/SWITCH_CHAT', { msg: chat, id: index });
+        this.$store.commit('sandBox/SWITCH_CHAT', chat);
         this.updateChatTarget(index, true);
       } else {
         chat = user.getFriendMessageById(index);
-        this.$store.commit('sandBox/SWITCH_CHAT', { msg: chat, id: index });
-        console.log('修改chattarget', index);
+        this.$store.commit('sandBox/SWITCH_CHAT', chat);
         this.updateChatTarget(index, false);
       }
       this.$emit('switchMsg', chat);
@@ -638,14 +636,6 @@ export default {
       } else {
         return user.getAllFriend();
       }
-    },
-    getDefaultActive() {
-      const msg = this.getCurrentMsg;
-      if (!msg.id) {
-        const target = msg.find((m) => m.role === 'friend');
-        return target ? target.sender : msg[0].receiver;
-      }
-      return msg.id;
     }
   },
   watch: {
@@ -659,9 +649,8 @@ export default {
       }
     }
   },
-  created() {
-    if (this.getCurrentMsg.id) this.messageMode = 1;
-  }
+  created() {},
+  mounted() {}
 };
 </script>
 

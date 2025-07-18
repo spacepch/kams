@@ -2,7 +2,7 @@
   <div class="k-sb-message" :class="{ 'k-sb-message-self': isSelf }">
     <div class="date"><span v-trans-time="message.date"></span></div>
     <div class="message">
-      <pps-context-menu @select="avatarContextMenuFn" :menus="getUserMenuItems">
+      <pps-context-menu @select="avatarContextMenuFn" :menus="getUserMenuItems()">
         <div slot="content">
           <pps-avatar
             size="36"

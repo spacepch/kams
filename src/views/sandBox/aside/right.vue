@@ -1,27 +1,75 @@
 <template>
-  <k-sb-aside class="aside-group" v-if="!getIsNarrowScreen">
-    <div class="title">群聊成员</div>
-    <template #inner>
-      <ul class="member-list">
-        <li
-          class="member-item"
-          @click="viewUserProfile(user)"
-          v-for="(user, index) in sortedMemberList"
-          :key="index"
-        >
-          <pps-context-menu :menus="getUserMenuItems(user)" @select="avatarContextMenuFn">
-            <div class="user-item" slot="content">
-              <pps-avatar :src="user.avatar" size="20"></pps-avatar>
-              <div class="user-name">{{ user.name }}</div>
-              <div v-if="chatTarget.isGroup" :class="user.role" class="user-role">
-                {{ tranRoleFn(user.role) }}
+  <div>
+    <k-sb-aside class="aside-group" v-if="!getIsNarrowScreen">
+      <div class="member-title">
+        <div class="title">群聊成员-{{ getGroupMemberLength }}人</div>
+        <div>
+          <gray-button class="icon-btn" @click.native="isShowFriendList = true">
+            <el-tooltip effect="dark" content="邀请加群" placement="left">
+              <svg
+                t="1723230695956"
+                class="icon"
+                viewBox="0 0 1024 1024"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                p-id="34315"
+                width="16"
+                height="16"
+                data-spm-anchor-id="a313x.search_index.0.i6.27883a81IeQ0Uy"
+              >
+                <path
+                  d="M914.618182 477.090909H546.909091V109.381818c0-18.618182-16.290909-34.909091-34.909091-34.909091s-34.909091 16.290909-34.909091 34.909091v367.709091H109.381818c-18.618182 0-34.909091 16.290909-34.909091 34.909091s16.290909 34.909091 34.909091 34.909091h367.709091v367.709091c0 18.618182 16.290909 34.909091 34.909091 34.909091s34.909091-16.290909 34.909091-34.909091V546.909091h367.709091c18.618182 0 34.909091-16.290909 34.909091-34.909091s-16.290909-34.909091-34.909091-34.909091z"
+                  fill="#7a7a7a"
+                  p-id="34316"
+                ></path>
+              </svg>
+            </el-tooltip>
+          </gray-button>
+        </div>
+      </div>
+      <template #inner>
+        <ul class="member-list">
+          <li
+            class="member-item"
+            @click="viewUserProfile(user)"
+            v-for="(user, index) in sortedMemberList"
+            :key="index"
+          >
+            <pps-context-menu :menus="getUserMenuItems(user)" @select="avatarContextMenuFn">
+              <div class="user-item" slot="content">
+                <pps-avatar :src="user.avatar" size="20"></pps-avatar>
+                <div class="user-name">{{ user.name }}</div>
+                <div v-if="chatTarget.isGroup" :class="user.role" class="user-role">
+                  {{ tranRoleFn(user.role) }}
+                </div>
               </div>
-            </div>
-          </pps-context-menu>
-        </li>
-      </ul>
-    </template>
-  </k-sb-aside>
+            </pps-context-menu>
+          </li>
+        </ul>
+      </template>
+    </k-sb-aside>
+
+    <pps-dialog :show.sync="isShowFriendList" title="好友列表">
+      <template v-slot:content>
+        <el-table :show-header="true" :data="getCurrentUser.friends">
+          <el-table-column align="center" label="头像">
+            <template slot-scope="scope">
+              <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
+            </template>
+          </el-table-column>
+          <el-table-column align="center" prop="id" label="id"></el-table-column>
+          <el-table-column align="center" prop="name" label="昵称"></el-table-column>
+          <el-table-column align="center" label="操作">
+            <template slot-scope="{ row }">
+              <pps-button :disabled="isInvited(row)" theme="confirm" @click="inviteFriendFn(row)">
+                {{ isInvited(row) ? '已进群' : '邀请' }}
+              </pps-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+    </pps-dialog>
+  </div>
 </template>
 
 <script>
@@ -29,18 +77,18 @@ import { tranRoleMixin } from '@/mixin/index';
 import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import kSbAside from '@/components/layout/aside';
 import Group from '@/utils/sandBox/group';
-// import User from '@/utils/sandBox/user';
+import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import { mapGetters } from 'vuex';
+import grayButton from '../ui/grayButton.vue';
 export default {
   name: 'sb-right-aside',
-  components: {
-    kSbAside
-  },
+  components: { kSbAside, grayButton },
   mixins: [tranRoleMixin],
   data() {
     return {
-      admin: new Administrators()
+      admin: new Administrators(),
+      isShowFriendList: false
     };
   },
   methods: {
@@ -56,6 +104,19 @@ export default {
         targetUser: user,
         actionType: 'VIEW_PROFILE'
       });
+    },
+    inviteFriendFn(user) {
+      const curUser = new User(this.getCurrentUser);
+      const res = curUser.inviteUserToGroup({
+        groupId: this.chatTarget.id,
+        invitee: user.id
+      });
+      console.log(res);
+    },
+    isInvited(user) {
+      const isEnter = new Group({ id: this.chatTarget.id }).getMemberById(user.id);
+      if (!isEnter) return false;
+      return true;
     }
   },
   computed: {
@@ -78,6 +139,9 @@ export default {
         return getPriority(a.role) - getPriority(b.role);
       });
       return sortedMemberList;
+    },
+    getGroupMemberLength() {
+      return this.memberList.length;
     }
   },
   mounted() {
@@ -91,20 +155,32 @@ export default {
   height: calc(var(--k-main-height) - var(--k-footer-height));
 }
 .aside-group {
-  width: var(--sb-aside-width);
+  // width: var(--sb-aside-width);
   background: #f2f2f2;
   border: 2px solid #e9e9e9;
   border-top: none;
-
+  user-select: none;
   &::v-deep .pps-context-menu-area {
     width: 100%;
     padding: 8px;
   }
-
   &::v-deep .k-aside-inner {
     flex-grow: 1;
   }
 
+  .member-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+
+    .icon-btn {
+      width: 25px;
+      height: 25px;
+      font-weight: bold;
+      margin: 0;
+    }
+  }
   .member-list {
     display: flex;
     flex-grow: 1;
