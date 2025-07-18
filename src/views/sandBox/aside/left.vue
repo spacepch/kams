@@ -3,20 +3,11 @@
     <!-- 切换用户导航栏 -->
     <k-sb-aside class="aside-users">
       <header class="k-chat-header">
-        <el-tooltip v-if="show.isCollapseMsg" effect="dark" content="添加用户" placement="right">
+        <el-tooltip effect="dark" content="添加用户" placement="right">
           <div class="add-user-avatar" @click="show.createUser = true">
             <img class="add-user" :src="ADD_USER_IMG" alt="添加用户" />
           </div>
         </el-tooltip>
-        <gray-button
-          v-else
-          class="icon-btn"
-          @click.native="show.isCollapseMsg = !show.isCollapseMsg"
-        >
-          <el-tooltip effect="dark" content="展开消息列表" placement="right">
-            <pps-icon icon="pps-icon-side-hide"></pps-icon>
-          </el-tooltip>
-        </gray-button>
       </header>
       <template #inner>
         <k-menu
@@ -115,7 +106,7 @@
           </el-tooltip>
           <!-- 收起消息列表 -->
           <el-tooltip effect="dark" content="收起消息列表" placement="right">
-            <gray-button class="icon-btn" @click.native="show.isCollapseMsg = !show.isCollapseMsg">
+            <gray-button class="icon-btn" @click.native="collapseMsghandler(false)">
               <pps-icon icon="pps-icon-side-show"></pps-icon>
             </gray-button>
           </el-tooltip>
@@ -314,7 +305,7 @@
               >
                 解散
               </pps-button>
-              <pps-button v-else theme="primary" @click="leaveGroupFn(scope.row)">退出</pps-button>
+              <pps-button v-else theme="primary" @click="leaveGroupFn(row)">退出</pps-button>
             </template>
           </el-table-column>
         </el-table>
@@ -325,26 +316,26 @@
     <pps-dialog :show.sync="show.userInfo" title="用户信息">
       <template v-slot:content>
         <div class="user-info-wrapper">
-          <pps-avatar :src="userDetailDate.avatar" size="40"></pps-avatar>
+          <img class="user-avatar" :src="userDetailDate.avatar" alt="" />
+          <el-descriptions class="margin-top" :column="2" border>
+            <el-descriptions-item>
+              <template slot="label">昵称</template>
+              {{ userDetailDate.name }}
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template slot="label">ID</template>
+              {{ userDetailDate.id }}
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template slot="label">年龄</template>
+              {{ userDetailDate.age }}
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <template slot="label">性别</template>
+              {{ userDetailDate.sex }}
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
-        <el-descriptions class="margin-top" :column="2" border>
-          <el-descriptions-item>
-            <template slot="label">昵称</template>
-            {{ userDetailDate.name }}
-          </el-descriptions-item>
-          <el-descriptions-item>
-            <template slot="label">ID</template>
-            {{ userDetailDate.id }}
-          </el-descriptions-item>
-          <el-descriptions-item>
-            <template slot="label">年龄</template>
-            {{ userDetailDate.age }}
-          </el-descriptions-item>
-          <el-descriptions-item>
-            <template slot="label">性别</template>
-            {{ userDetailDate.sex }}
-          </el-descriptions-item>
-        </el-descriptions>
       </template>
     </pps-dialog>
   </k-container>
@@ -421,14 +412,25 @@ export default {
       default() {
         return null;
       }
+    },
+    updateCollapseMsg: {
+      type: Function,
+      default() {
+        return null;
+      }
     }
   },
   methods: {
+    collapseMsghandler(state) {
+      this.show.isCollapseMsg = state;
+      this.updateCollapseMsg(state);
+    },
     switchUserFn(id) {
       if (this.getCurrentUser.id === id) return;
       this.$store.commit('sandBox/SWITCH_USER', id);
       this.$refs.msgMenuRef.activeIndex = null;
-      this.$store.commit('sandBox/SWITCH_CHAT', { id });
+      this.$store.commit('sandBox/SWITCH_CHAT');
+      this.updateChatTarget(null, false, null);
     },
     removeUserFn(id) {
       const admin = new Administrators();
@@ -601,11 +603,12 @@ export default {
       if (this.messageMode) {
         chat = user.getGroupMessageById(index);
         this.$store.commit('sandBox/SWITCH_CHAT', chat);
-        this.updateChatTarget(index, true);
+        this.updateChatTarget(index, true, chat.name);
       } else {
         chat = user.getFriendMessageById(index);
         this.$store.commit('sandBox/SWITCH_CHAT', chat);
-        this.updateChatTarget(index, false);
+        const friend = this.admin.getUserById(index);
+        this.updateChatTarget(index, false, friend.name);
       }
       this.$emit('switchMsg', chat);
     },
@@ -642,9 +645,9 @@ export default {
     'screen.width': {
       handler(w) {
         if (w < 768) {
-          this.show.isCollapseMsg = false;
+          this.collapseMsghandler(false);
         } else {
-          this.show.isCollapseMsg = true;
+          this.collapseMsghandler(true);
         }
       }
     }
@@ -785,12 +788,13 @@ export default {
       border-bottom: 2px solid #e9e9e9;
 
       .icon-btn {
-        &:nth-of-type(1) {
-          margin-left: 10px;
-        }
+        margin-left: 10px;
       }
       .k-tab-wrapper {
         margin-left: 15px;
+      }
+      &:last-child {
+        margin-right: 10px;
       }
     }
 
@@ -884,6 +888,26 @@ export default {
     }
     @media screen and (max-width: 700px) {
       width: 100%;
+    }
+  }
+  .user-info-wrapper {
+    display: flex;
+    justify-content: center;
+    height: 100px;
+
+    .el-descriptions {
+      &::v-deep .el-descriptions__body {
+        table {
+          height: 100px;
+        }
+      }
+    }
+
+    .user-avatar {
+      border: 1px solid #ebeef5;
+      box-sizing: border-box;
+      height: 100px;
+      width: 100px;
     }
   }
 }

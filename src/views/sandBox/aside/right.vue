@@ -3,9 +3,9 @@
     <k-sb-aside class="aside-group" v-if="!getIsNarrowScreen">
       <div class="member-title">
         <div class="title">群聊成员-{{ getGroupMemberLength }}人</div>
-        <div>
+        <div class="btn-area">
           <gray-button class="icon-btn" @click.native="isShowFriendList = true">
-            <el-tooltip effect="dark" content="邀请加群" placement="left">
+            <el-tooltip effect="dark" content="邀请加群" placement="top">
               <svg
                 t="1723230695956"
                 class="icon"
@@ -23,6 +23,11 @@
                   p-id="34316"
                 ></path>
               </svg>
+            </el-tooltip>
+          </gray-button>
+          <gray-button class="icon-btn leave" @click.native="leaveGroupFn()">
+            <el-tooltip effect="dark" content="退出群聊" placement="top">
+              <i class="layui-icon layui-icon-close"></i>
             </el-tooltip>
           </gray-button>
         </div>
@@ -61,7 +66,7 @@
           <el-table-column align="center" prop="name" label="昵称"></el-table-column>
           <el-table-column align="center" label="操作">
             <template slot-scope="{ row }">
-              <pps-button :disabled="isInvited(row)" theme="confirm" @click="inviteFriendFn(row)">
+              <pps-button :disabled="isInvited(row)" :theme="isInvited(row) ? 'primary' : 'confirm'" @click="inviteFriendFn(row)">
                 {{ isInvited(row) ? '已进群' : '邀请' }}
               </pps-button>
             </template>
@@ -94,6 +99,7 @@ export default {
   methods: {
     getUserMenuItems(user) {
       const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
+      // console.log(curUer, user);
       const group = new Group({ id: this.chatTarget.id });
       const menu = getVisibleMenuItems(curUer, user, group);
       return menu;
@@ -117,6 +123,19 @@ export default {
       const isEnter = new Group({ id: this.chatTarget.id }).getMemberById(user.id);
       if (!isEnter) return false;
       return true;
+    },
+    leaveGroupFn() {
+      this.$dialog({ title: '警告', content: '确定要退出群聊吗？' })
+        .then((action) => {
+          console.log(action);
+          const user = new User(this.getCurrentUser);
+          const res = user.leaveGroupById(this.chatTarget.id);
+          if (res) this.$message.success('退出群聊成功！');
+          else this.$message.error('退出群聊失败！');
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
   },
   computed: {
@@ -155,7 +174,7 @@ export default {
   height: calc(var(--k-main-height) - var(--k-footer-height));
 }
 .aside-group {
-  // width: var(--sb-aside-width);
+  width: var(--sb-aside-width);
   background: #f2f2f2;
   border: 2px solid #e9e9e9;
   border-top: none;
@@ -174,11 +193,21 @@ export default {
     justify-content: space-between;
     padding: 8px;
 
+    .btn-area {
+      display: flex;
+    }
+
     .icon-btn {
       width: 25px;
       height: 25px;
       font-weight: bold;
       margin: 0;
+      background: rgb(255, 255, 255);
+    }
+
+    .leave {
+      margin-left: 10px;
+      color: rgb(247, 76, 108);
     }
   }
   .member-list {

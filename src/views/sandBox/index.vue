@@ -5,18 +5,23 @@
       ref="leftAsideRef"
       :screen="screen"
       :updateChatTarget="updateChatTargetFn"
+      :updateCollapseMsg="updateCollapseMsgFn"
       @switchMsg="switchMsgCallback"
     ></sb-left-aside>
     <k-container v-show="show.isShowChatBox" direction="vertical" style="width: 100%">
       <!-- 聊天窗口页头 -->
       <header class="k-chat-header" v-show="show.isShowChatBox">
-        <gray-button class="icon-btn" v-show="1">
-          <pps-icon icon="pps-icon-side-show"></pps-icon>
+        <gray-button
+          class="icon-btn"
+          @click.native="collapseMsghandler()"
+          v-show="!show.isCollapseMsg"
+        >
+          <el-tooltip effect="dark" content="展开消息列表" placement="right">
+            <pps-icon icon="pps-icon-side-hide"></pps-icon>
+          </el-tooltip>
         </gray-button>
         <div class="k-chat-header-content">
-          <h1 class="k-chat-header-title">
-            {{ chatTarget.id }}{{ getGroupMemberLength }}
-          </h1>
+          <h1 class="k-chat-header-title">{{ chatTarget.name }}{{ getGroupMemberLength }}</h1>
         </div>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
@@ -57,13 +62,15 @@ export default {
       show: {
         isShowUsers: true,
         isShowGroups: true,
-        isShowChatBox: true
+        isShowChatBox: true,
+        isCollapseMsg: true
       },
       screen: { width: 0, height: 0 },
       admin: new Administrators(),
       chatTarget: {
         id: '',
-        isGroup: false
+        isGroup: false,
+        name: ''
       }
     };
   },
@@ -127,10 +134,17 @@ export default {
       this.screen.width = width;
       this.screen.height = height;
     },
-    updateChatTargetFn(id, isGroup) {
+    collapseMsghandler() {
+      this.$refs.leftAsideRef.collapseMsghandler(true);
+    },
+    updateChatTargetFn(id, isGroup, name) {
       // console.log('chage', id, isGroup);
       this.chatTarget.id = id;
       this.chatTarget.isGroup = isGroup;
+      this.chatTarget.name = name;
+    },
+    updateCollapseMsgFn(state) {
+      this.show.isCollapseMsg = state;
     },
     switchMsgCallback(params) {
       // console.log(params);
@@ -255,9 +269,12 @@ export default {
   border-bottom: 2px solid #e9e9e9;
   background-color: #f2f2f2;
 }
-.k-chat-header-title {
-  font-size: 16px;
-  font-style: normal;
+.k-chat-header-content {
+  margin-inline-start: 10px;
+  .k-chat-header-title {
+    font-size: 16px;
+    font-style: normal;
+  }
 }
 .aside-group,
 .aside-users {

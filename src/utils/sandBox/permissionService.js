@@ -1,5 +1,3 @@
-// src/services/permissionService.js
-
 // 角色权限级别
 const ROLE_LEVEL = {
   member: 1,

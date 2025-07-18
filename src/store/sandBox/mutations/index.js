@@ -75,6 +75,7 @@ export default {
     const groupIndex = state.groups.findIndex((group) => group.id === id);
     if (groupIndex > -1) state.groups.splice(groupIndex, 1);
 
+    // 如果当前群组是被删群组，则清空当前消息
     const currentMsg = state.currentMsg;
     if (!Array.isArray(currentMsg) && currentMsg !== null) {
       currentMsg.id === id && (state.currentMsg = null);
@@ -113,10 +114,11 @@ export default {
     member.groups.push({ id: gid, role });
   },
   REMOVE_MEMBER(state, { gid, mid }) {
+    // 检查群组和成员是否存在
     const group = state.groups.find((group) => group.id === gid);
     if (!group) return console.error('群组不存在', gid);
 
-    // 判断用户是否存在
+    // 检查用户是否存在
     const userIndex = state.users.findIndex((user) => user.id === mid);
     if (userIndex === -1) return console.error('用户不存在', mid);
 
@@ -125,7 +127,7 @@ export default {
     const groupIndex = user.groups.findIndex((g) => g.id === gid);
     if (groupIndex !== -1) user.groups.splice(groupIndex, 1);
 
-    // 判断是否为管理员
+    // 检查是否为管理员
     const adminIndex = group.admins.findIndex((admin) => admin === mid);
     if (adminIndex > -1) group.admins.splice(adminIndex, 1);
 
@@ -133,6 +135,13 @@ export default {
     const memberIndex = group.members.findIndex((m) => m.id === mid);
     if (memberIndex === -1) return console.error('群组成员不存在', mid);
     group.members.splice(memberIndex, 1);
+
+    // 如果当前群组是被删群组，则清空当前消息
+    const currentUser = state.currentUser;
+    const currentMsg = state.currentMsg;
+    if (user.id === currentUser.id && gid === currentMsg.id) {
+      state.currentMsg = null;
+    }
   },
 
   // 消息

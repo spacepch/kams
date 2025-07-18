@@ -1,7 +1,7 @@
 <template>
-  <button class="gray-btn">
+  <div class="gray-btn">
     <slot></slot>
-  </button>
+  </div>
 </template>
 
 <script>
@@ -18,18 +18,16 @@ export default {
   background-color: #eeeeee;
   border-radius: 5px;
   color: #636c76;
-  margin-right: 10px;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background-color: #e2e2e2;
   }
   &:active {
     background-color: #d7d7d7;
-  }
-
-  &:nth-of-type(1) {
-    margin-left: 10px;
   }
 }
 </style>
