@@ -79,6 +79,7 @@ export default {
   display: flex;
   justify-content: space-between !important;
   align-items: center;
+  z-index: 5;
 
   .detail {
     height: 100%;

@@ -3,7 +3,7 @@
     <!-- 切换用户导航栏 -->
     <k-sb-aside class="aside-users">
       <header class="k-chat-header">
-        <el-tooltip effect="dark" content="添加用户" placement="right">
+        <el-tooltip effect="dark" content="添加用户" placement="bottom">
           <div class="add-user-avatar" @click="show.createUser = true">
             <img class="add-user" :src="ADD_USER_IMG" alt="添加用户" />
           </div>
@@ -77,7 +77,7 @@
     <!-- 好友群聊 列表 -->
     <transition>
       <k-sb-aside class="aside-list" v-show="show.isCollapseMsg">
-        <header class="k-chat-header">
+        <header class="k-chat-header" v-show="show.isCollapseMsg">
           <k-tab
             :tabs="['私聊', '群聊']"
             @changeTab="toggleMsgTabFn"
@@ -142,6 +142,12 @@
         </template>
       </k-sb-aside>
     </transition>
+    <div
+      @click="collapseMsghandler(false)"
+      v-if="show.isCollapseMsg"
+      v-show="isShowMask"
+      class="mask"
+    ></div>
 
     <!-- 创建用户 对话框 -->
     <pps-dialog
@@ -645,6 +651,10 @@ export default {
     getFriendListExceptSuper() {
       const list = this.getCurrentUser.friends.filter((friend) => friend.id !== 'user-super-admin');
       return list;
+    },
+    isShowMask() {
+      const narrow = this.screen.width < 768;
+      return narrow && this.show.isCollapseMsg;
     }
   },
   watch: {
@@ -666,13 +676,24 @@ export default {
 <style lang="scss" scoped>
 .left-aside {
   height: var(--k-main);
+  position: relative;
+  .mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100%;
+    background: #000;
+    opacity: 0.5;
+    z-index: 3;
+  }
 
   .aside-users {
     width: 60px;
     background-color: #f2f2f2;
     border-bottom: 2px solid #e9e9e9;
     border-right: 2px solid #e9e9e9;
-    z-index: 2;
+    z-index: 5;
 
     .k-chat-header {
       position: sticky;
@@ -787,6 +808,13 @@ export default {
     background-color: #fff;
     border-bottom: 2px solid #e9e9e9;
     border-right: 2px solid #e9e9e9;
+
+    @media screen and (max-width: 768px) {
+      position: fixed;
+      left: 60px;
+      // width: calc(100vw - 60px);
+      z-index: 4;
+    }
 
     .k-chat-header {
       display: flex;
@@ -929,14 +957,18 @@ export default {
 .v-enter,
 .v-leave-to {
   width: 0;
+  // transform: translateX(-241px);
+  // left: 0px;
 }
 .v-enter-active,
 .v-leave-active {
-  transition: width 0.3s ease-in-out;
+  transition: 0.3s ease-in-out;
 }
 .v-enter-to,
 .v-leave {
   width: 241px;
+  // transform: translateX(0);
+  // left: 60px;
 }
 .isTransparent {
   z-index: -111;

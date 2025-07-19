@@ -2,7 +2,7 @@
   <div class="k-chat-main chat-empty">
     <template v-if="getCurrentMsg">
       <!-- 聊天内容 -->
-      <div class="k-chat-box pps-scrollbar">
+      <div ref="chatBox" class="k-chat-box pps-scrollbar">
         <k-sb-message
           v-for="item in messageList"
           :message="item"
@@ -13,7 +13,6 @@
           @replyMsg="replyMsgFn"
           @handleMenuAction="handleMenuAction"
         ></k-sb-message>
-        User类踢出成员方法待完善
       </div>
       <!-- 输入框 -->
       <div class="k-chat-input-box">
@@ -64,7 +63,7 @@ export default {
       LOGO,
       message: '',
       lastRange: null,
-      replyMsg: { name: '', content: '' },
+      replyMsg: { name: null, content: null },
       admin: new Administrators()
     };
   },
@@ -103,9 +102,9 @@ export default {
       }
       this.message = '';
       this.$refs.input.innerHTML = '';
-      this.replyMsg = { name: '', content: '' };
+      this.cancelReplyMsgFn();
       this.$refs.input.focus();
-      // this.test();
+      this.scrollToBottom(true);
     },
     saveRange() {
       const selection = window.getSelection();
@@ -199,7 +198,21 @@ export default {
       this.$emit('handleMenuAction', action);
     },
     cancelReplyMsgFn() {
-      this.replyMsg = { name: '', content: '' };
+      this.replyMsg = { name: null, content: null };
+    },
+    scrollToBottom(smooth = false) {
+      const container = this.$refs.chatBox;
+      if (!container) return;
+      this.$nextTick(() => {
+        if (smooth) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          });
+        } else {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
     }
   },
   computed: {
@@ -229,7 +242,7 @@ export default {
   },
   watch: {
     getCurrentMsg(val) {
-      this.replyMsg = { name: '', content: '' };
+      this.cancelReplyMsgFn();
       if (this.$refs.input) {
         this.$refs.input.focus();
       }
@@ -239,8 +252,13 @@ export default {
     if (this.$refs.input) {
       this.$refs.input.focus();
     }
+    this.$nextTick(() => {
+      this.scrollToBottom();
+    });
   },
-  updated() {}
+  updated() {
+    this.scrollToBottom();
+  }
 };
 </script>
 
