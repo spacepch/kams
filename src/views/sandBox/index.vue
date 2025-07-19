@@ -268,6 +268,10 @@ export default {
   align-items: center;
   border-bottom: 2px solid #e9e9e9;
   background-color: #f2f2f2;
+
+  .icon-btn {
+    margin-left: 10px;
+  }
 }
 .k-chat-header-content {
   margin-inline-start: 10px;

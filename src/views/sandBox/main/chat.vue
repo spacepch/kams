@@ -30,15 +30,20 @@
         >
           {{ messagingEnabled ? null : '禁言中...' }}
         </div>
-        <div v-if="replyMsg" class="reply-chat">{{ replyMsg.name }}：{{ replyMsg.content }}</div>
-        <pps-button
-          :disabled="!messagingEnabled"
-          @click="sendMessageFn"
-          theme="confirm"
-          class="k-chat-send-btn"
-        >
-          发送
-        </pps-button>
+        <div class="operation">
+          <div v-show="replyMsg.name" class="reply-chat-wrapper">
+            <span class="content">{{ replyMsg.name }}：{{ replyMsg.content }}</span>
+            <i @click="cancelReplyMsgFn" class="el-icon-circle-close"></i>
+          </div>
+          <pps-button
+            :disabled="!messagingEnabled"
+            @click="sendMessageFn"
+            theme="confirm"
+            class="k-chat-send-btn"
+          >
+            发送
+          </pps-button>
+        </div>
       </div>
     </template>
     <el-empty v-else description="" style="height: 100%" :image="LOGO"></el-empty>
@@ -59,7 +64,7 @@ export default {
       LOGO,
       message: '',
       lastRange: null,
-      replyMsg: null,
+      replyMsg: { name: '', content: '' },
       admin: new Administrators()
     };
   },
@@ -98,7 +103,7 @@ export default {
       }
       this.message = '';
       this.$refs.input.innerHTML = '';
-      this.replyMsg = null;
+      this.replyMsg = { name: '', content: '' };
       this.$refs.input.focus();
       // this.test();
     },
@@ -187,11 +192,14 @@ export default {
     },
     replyMsgFn(msg) {
       const name = this.admin.getUserById(msg.role).name;
-      this.replyMsg = { name, ...msg };
+      this.replyMsg = { name, content: msg.content };
       this.$refs.input.focus();
     },
     handleMenuAction(action) {
       this.$emit('handleMenuAction', action);
+    },
+    cancelReplyMsgFn() {
+      this.replyMsg = { name: '', content: '' };
     }
   },
   computed: {
@@ -221,7 +229,7 @@ export default {
   },
   watch: {
     getCurrentMsg(val) {
-      this.replyMsg = null;
+      this.replyMsg = { name: '', content: '' };
       if (this.$refs.input) {
         this.$refs.input.focus();
       }
@@ -278,19 +286,34 @@ export default {
         display: none;
       }
     }
-    .k-chat-send-btn {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-    }
-    .reply-chat {
-      width: fit-content;
-      font-size: 12px;
-      border-radius: 4px;
-      padding: 6px 8px;
-      margin-top: 4px;
-      background: var(--sb-reply-bg);
-      color: var(--sb-reply-color);
+    .operation {
+      display: flex;
+      justify-content: space-between;
+      .k-chat-send-btn {
+        margin-left: auto;
+      }
+      .reply-chat-wrapper {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        border-radius: 4px;
+        padding: 6px 8px;
+        background: var(--sb-reply-bg);
+        color: var(--sb-reply-color);
+
+        .content {
+          // height: 1em;
+          max-width: 15em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .el-icon-circle-close {
+          width: 1em;
+          margin-left: 5px;
+          cursor: pointer;
+        }
+      }
     }
   }
 }

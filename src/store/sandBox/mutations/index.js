@@ -1,5 +1,5 @@
 import Vue from 'vue';
-console.error();
+console.error('mutations 移除成员方法待完善（为检查是否为群主）');
 export default {
   // 用户
   ADD_USER(state, user) {
