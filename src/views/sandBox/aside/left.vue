@@ -142,11 +142,13 @@
         </template>
       </k-sb-aside>
     </transition>
+
+    <!-- 遮罩层 -->
     <div
-      @click="collapseMsghandler(false)"
-      v-if="show.isCollapseMsg"
-      v-show="isShowMask"
       class="mask"
+      v-show="isShowMask"
+      v-if="show.isCollapseMsg"
+      @click="collapseMsghandler(false)"
     ></div>
 
     <!-- 创建用户 对话框 -->
@@ -407,12 +409,6 @@ export default {
     };
   },
   props: {
-    screen: {
-      type: Object,
-      default() {
-        return { width: 0, height: 0 };
-      }
-    },
     updateChatTarget: {
       type: Function,
       default() {
@@ -595,14 +591,6 @@ export default {
       const group_list = new User(this.getCurrentUser).getAllGroups();
       return group_list;
     },
-    screenResize(w, h) {
-      const width = Math.floor(w);
-      if (width < 600) {
-        this.show.isCollapseMsg = false;
-        return;
-      }
-      this.show.isCollapseMsg = true;
-    },
     selectMsgFn({ index }) {
       const user = new User(this.getCurrentUser);
       let chat;
@@ -626,6 +614,7 @@ export default {
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
+    ...mapGetters('layoutOption', ['getIsNarrowScreen']),
     isAdded() {
       const curUser = this.getCurrentUser;
       const type = this.searchDialog.index;
@@ -653,22 +642,14 @@ export default {
       return list;
     },
     isShowMask() {
-      const narrow = this.screen.width < 768;
+      const narrow = this.$store.state.layoutOption.isNarrowScreen;
       return narrow && this.show.isCollapseMsg;
     }
   },
-  watch: {
-    'screen.width': {
-      handler(w) {
-        if (w < 768) {
-          this.collapseMsghandler(false);
-        } else {
-          this.collapseMsghandler(true);
-        }
-      }
-    }
+  created() {
+    this.collapseMsghandler(true);
+    console.log(this.show.isCollapseMsg);
   },
-  created() {},
   mounted() {}
 };
 </script>

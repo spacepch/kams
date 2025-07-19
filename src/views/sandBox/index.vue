@@ -1,9 +1,8 @@
 <template>
-  <k-container class="k-container k-sb-main" v-resize-ob:300="screenResize" direction="horizontal">
+  <k-container class="k-container k-sb-main" direction="horizontal">
     <!-- 好友、群聊列表 -->
     <sb-left-aside
       ref="leftAsideRef"
-      :screen="screen"
       :updateChatTarget="updateChatTargetFn"
       :updateCollapseMsg="updateCollapseMsgFn"
       @switchMsg="switchMsgCallback"
@@ -23,6 +22,13 @@
         <div class="k-chat-header-content">
           <h1 class="k-chat-header-title">{{ chatTarget.name }}{{ getGroupMemberLength }}</h1>
         </div>
+        <gray-button
+          @click.native="collapseRighthandler()"
+          v-show="chatTarget.isGroup"
+          class="showGroupInfo"
+        >
+          <i class="el-icon-more"></i>
+        </gray-button>
       </header>
       <k-container direction="horizontal" class="k-chat-main">
         <sb-chat-main
@@ -34,11 +40,19 @@
         ></sb-chat-main>
         <!-- 右侧、群聊成员 -->
         <sb-right-aside
-          v-if="chatTarget.isGroup && getMemberList.length"
+          v-if="chatTarget.isGroup"
+          v-show="show.isCollapseRight"
           :chatTarget="chatTarget"
           :memberList="getMemberList"
           @handleMenuAction="handleMenuAction"
         ></sb-right-aside>
+        <!-- 遮罩层 -->
+        <div
+          v-if="getIsNarrowScreen"
+          v-show="show.isCollapseRight"
+          @click="collapseRighthandler()"
+          class="mask"
+        ></div>
       </k-container>
     </k-container>
   </k-container>
@@ -63,7 +77,8 @@ export default {
         isShowUsers: true,
         isShowGroups: true,
         isShowChatBox: true,
-        isCollapseMsg: true
+        isCollapseMsg: true,
+        isCollapseRight: false
       },
       screen: { width: 0, height: 0 },
       admin: new Administrators(),
@@ -128,14 +143,11 @@ export default {
       // eslint-disable-next-line no-new
       new User({ id, name, age, sex });
     },
-    screenResize(x, y) {
-      const width = Math.floor(x);
-      const height = Math.floor(y);
-      this.screen.width = width;
-      this.screen.height = height;
-    },
     collapseMsghandler() {
       this.$refs.leftAsideRef.collapseMsghandler(true);
+    },
+    collapseRighthandler() {
+      this.show.isCollapseRight = !this.show.isCollapseRight;
     },
     updateChatTargetFn(id, isGroup, name) {
       // console.log('chage', id, isGroup);
@@ -225,6 +237,7 @@ export default {
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
+    ...mapGetters('layoutOption', ['getIsNarrowScreen']),
     getMemberList() {
       if (this.chatTarget.isGroup && this.getCurrentMsg) {
         const group = this.admin.getGroupById(this.chatTarget.id);
@@ -239,6 +252,7 @@ export default {
   mounted() {
     this.$store.commit('sandBox/SWITCH_USER');
     this.$store.commit('sandBox/SWITCH_CHAT');
+    this.show.isCollapseRight = !this.getIsNarrowScreen;
   }
 };
 </script>
@@ -258,7 +272,19 @@ export default {
   // flex: 1;
 }
 .k-chat-main {
+  position: relative;
   flex-grow: 1;
+
+  .mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100%;
+    background: #000;
+    opacity: 0.5;
+    z-index: 3;
+  }
 }
 .k-container ::v-deep .k-chat-header {
   height: var(--sb-header-height);
@@ -271,6 +297,10 @@ export default {
 
   .icon-btn {
     margin-left: 10px;
+  }
+  .showGroupInfo {
+    margin-left: auto;
+    margin-right: 10px;
   }
 }
 .k-chat-header-content {
