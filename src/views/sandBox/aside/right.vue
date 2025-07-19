@@ -99,6 +99,7 @@ export default {
   data() {
     return {
       admin: new Administrators(),
+      group: new Group({ id: this.chatTarget.id }),
       isShowFriendList: false
     };
   },
@@ -133,9 +134,11 @@ export default {
     leaveGroupFn() {
       this.$dialog({ title: '警告', content: '确定要退出群聊吗？' })
         .then((action) => {
-          console.log(action);
           const user = new User(this.getCurrentUser);
-          const res = user.leaveGroupById(this.chatTarget.id);
+          let res;
+          console.log('user', this.group.lord, user.id);
+          if (this.group.lord === user.id) res = user.removeGroupById(this.chatTarget.id);
+          else res = user.leaveGroupById(this.chatTarget.id);
           if (res) this.$message.success('退出群聊成功！');
           else this.$message.error('退出群聊失败！');
         })

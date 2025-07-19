@@ -10,12 +10,12 @@ import store from '@/store';
 export default class Group {
   constructor({ name, numId, id, lord, avatar }) {
     this.id = id || `group-${numId}`;
-    this.numId = numId;
-    this.name = name;
-    this.lord = lord;
+    this.numId = numId || this.self().numId;
+    this.name = name || this.self().name;
+    this.lord = lord || this.self().lord;
     this.avatar = avatar || `https://k.hotaru.icu/api/data/avatar/${name}`;
-    this.admins = [];
-    this.members = [];
+    this.admins = this.self().admins || [];
+    this.members = this.self().members || [];
   }
 
   mount() {
