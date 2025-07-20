@@ -73,12 +73,14 @@ export default {
 };
 </script>
 
-<style scoped lang="less">
+<style scoped lang="scss">
 .el-footer {
   height: var(--k-footer-height) !important;
   display: flex;
   justify-content: space-between !important;
   align-items: center;
+  font-size: 12px;
+  background-color: #eee;
   z-index: 5;
 
   .detail {
@@ -116,12 +118,5 @@ export default {
   .pps-context-menu-area {
     height: 100%;
   }
-}
-.el-footer {
-  background-color: #eee;
-  font-size: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 </style>

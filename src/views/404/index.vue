@@ -1,6 +1,7 @@
 <template>
   <div class="editor-wrapper">
     <div
+    v-if="0"
       class="editor"
       ref="editor"
       contenteditable="true"
@@ -20,10 +21,25 @@
         {{ user.name }}
       </li>
     </ul>
-    <pps-button theme="text">@qwe</pps-button>
+    <div class="test">
+      <pps-context-menu
+        :menus="contextMenus"
+        trigger="contextmenu"
+        @select="handleMenuSelect"
+        @open="handleMenuOpen"
+        @close="handleMenuClose"
+      >
+        <template #content>
+          <div style=" border: 1px solid #ccc">
+            右键点击此区域显示菜单
+          </div>
+        </template>
+      </pps-context-menu>
+    </div>
   </div>
 </template>
 <script>
+import contextm from './contextMenu.vue';
 export default {
   data() {
     return {
@@ -40,10 +56,30 @@ export default {
         top: '0px',
         left: '0px'
       },
-      lastRange: null
+      lastRange: null,
+      contextMenus: [
+        { label: '新建', icon: 'fas fa-plus' },
+        { label: '复制', icon: 'fas fa-copy', shortcut: 'Ctrl+C' },
+        { label: '粘贴', icon: 'fas fa-paste', disabled: true },
+        { divider: true },
+        { label: '删除', icon: 'fas fa-trash' }
+      ]
     };
   },
+  components: {
+    ppsContextMenu: contextm
+  },
   methods: {
+    handleMenuSelect(item, index) {
+      console.log('选中菜单项：', item, '索引：', index);
+    },
+    handleMenuOpen() {
+      console.log('菜单打开');
+    },
+    handleMenuClose() {
+      console.log('菜单关闭');
+    },
+
     onInput() {
       const selection = window.getSelection();
       this.lastRange = selection.getRangeAt(0).cloneRange();
@@ -52,9 +88,7 @@ export default {
       const atIndex = text.lastIndexOf('@');
       if (atIndex !== -1) {
         this.mentionQuery = text.slice(atIndex + 1);
-        this.filteredUsers = this.users.filter(user =>
-          user.name.includes(this.mentionQuery)
-        );
+        this.filteredUsers = this.users.filter((user) => user.name.includes(this.mentionQuery));
         if (this.filteredUsers.length > 0) {
           this.showUserList = true;
           this.activeIndex = 0;
@@ -76,8 +110,7 @@ export default {
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         this.activeIndex =
-          (this.activeIndex - 1 + this.filteredUsers.length) %
-          this.filteredUsers.length;
+          (this.activeIndex - 1 + this.filteredUsers.length) % this.filteredUsers.length;
       } else if (e.key === 'Enter') {
         e.preventDefault();
         this.selectUser(this.filteredUsers[this.activeIndex]);
@@ -103,7 +136,7 @@ export default {
       // 插入 span 标签作为 mention
       const mentionNode = document.createElement('span');
       mentionNode.textContent = `@${user.name}`;
-      mentionNode.contentEditable = "false";
+      mentionNode.contentEditable = 'false';
       mentionNode.className = 'mention-tag';
 
       range.insertNode(mentionNode);
@@ -148,7 +181,13 @@ export default {
 <style scoped>
 .editor-wrapper {
   position: relative;
-  width: 400px;
+  width: 100%;
+  height: 100%;
+}
+.test {
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 .editor {
   border: 1px solid #ccc;

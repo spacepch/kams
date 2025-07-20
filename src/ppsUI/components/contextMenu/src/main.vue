@@ -6,8 +6,8 @@
         ref="menu"
         v-if="isShowMenus"
         v-show="showContextMenu"
+        :style="menuPosition"
         class="pps-context-menu_wrapper"
-        :style="{ left: x + 'px', top: y + 'px' }"
         @click="(e) => e.stopPropagation()"
       >
         <div class="pps-context-menu_prepend" v-if="$slots.prepend">
@@ -52,22 +52,9 @@ export default {
       }
     }
   },
-  props: {
-    menus: {
-      default() {
-        return [];
-      }
-    },
-    trigger: {
-      type: String,
-      default() {
-        return 'contextmenu';
-      }
-    }
-  },
   data() {
     return {
-      showContextMenu: true,
+      showContextMenu: false,
       x: 0,
       y: 0,
       isBottom: false,
@@ -83,32 +70,47 @@ export default {
     openMenu(e) {
       e.preventDefault();
       e.stopPropagation();
-      this.setPosition();
-      if (!this.isRight) this.x = e.clientX;
-      if (!this.isBottom) this.y = e.clientY;
+      this.x = e.clientX;
+      this.y = e.clientY;
       this.showContextMenu = true;
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          this.setPosition(e.clientX, e.clientY);
+        });
+      });
     },
-    setPosition() {
+    setPosition(clientX, clientY) {
       if (!this.isShowMenus) return;
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-      const crect = this.$refs.container.getBoundingClientRect();
+      // requestAnimationFrame(() => {});
+      const menu = this.$refs.menu;
+      const originalTransition = menu.style.transition;
+      const originalTransform = menu.style.transform;
+      // const originalVisibility = menu.style.visibility;
 
-      this.$refs.menu.style.display = '';
-      const ulrect = this.$refs.menu.getBoundingClientRect();
+      menu.style.transition = 'none';
+      menu.style.transform = 'none';
+      // menu.style.visibility = 'hidden';
 
-      this.$refs.menu.style.display = 'none';
-      if (windowHeight - crect.bottom < ulrect.height) {
-        this.isBottom = true;
-        // console.warn('[pps-ui]底部超出');
-        this.y = windowHeight - ulrect.height - crect.height;
+      // 获取菜单尺寸
+      const rect = this.$refs.menu.getBoundingClientRect();
+
+      if (clientX + rect.width > windowWidth) {
+        this.x = clientX - rect.width;
       }
 
-      if (windowWidth - crect.right < ulrect.width) {
-        this.isRight = true;
-        // console.warn('[pps-ui]右侧超出');
-        this.x = windowWidth - ulrect.width;
+      if (clientY + rect.height > windowHeight) {
+        this.y = clientY - rect.height;
       }
+
+      // eslint-disable-next-line no-unused-expressions
+      menu.offsetHeight;
+
+      // 恢复样式
+      menu.style.transition = originalTransition;
+      menu.style.transform = originalTransform;
+      // menu.style.visibility = originalVisibility;
     },
     closeMenu() {
       this.showContextMenu = false;
@@ -120,24 +122,41 @@ export default {
     bindContextEvents() {
       this.$refs.container.addEventListener('contextmenu', this.openMenu, false);
       window.addEventListener('contextmenu', this.closeMenu, true);
-      this.setPosition();
     }
   },
   computed: {
     isShowMenus() {
       return this.menus.length || this.$slots.prepend || this.$slots.append;
+    },
+    menuPosition() {
+      return {
+        left: this.x + 'px',
+        top: this.y + 'px'
+      };
     }
   },
   mounted() {
-    this.$refs.container.addEventListener('contextmenu', this.openMenu, false);
+    this.$refs.container.addEventListener('contextmenu', this.openMenu, true);
     window.addEventListener('click', this.closeMenu, true);
     window.addEventListener('contextmenu', this.closeMenu, true);
-    this.setPosition();
   },
   beforeDestroy() {
     this.$refs.container.removeEventListener('contextmenu', this.openMenu);
     window.removeEventListener('click', this.closeMenu);
     window.removeEventListener('contextmenu', this.closeMenu);
+  },
+  props: {
+    menus: {
+      default() {
+        return [];
+      }
+    },
+    trigger: {
+      type: String,
+      default() {
+        return 'contextmenu';
+      }
+    }
   }
 };
 </script>

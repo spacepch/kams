@@ -362,7 +362,6 @@ import Administrators from '@/utils/sandBox/administrators';
 import ADD_USER_IMG from '@/assets/addAvatar.svg';
 import REMOVE_USER from '@/assets/removeAvatar.svg';
 import grayButton from '../ui/grayButton.vue';
-
 export default {
   name: 'sb-left-aside',
   components: { kSbAside, kContainer, kMenu, kMenuItem, kTab, grayButton },
