@@ -6,6 +6,7 @@ export default {
     isNarrowScreen: false,
     host: '',
     port: '',
+    sandBoxPort: 720,
     protocol: '',
     username: '',
     password: ''
@@ -25,6 +26,9 @@ export default {
     },
     updatePort(state, val = '') {
       state.port = val;
+    },
+    updateSandBoxPort(state, val = 720) {
+      state.sandBoxPort = val;
     },
     updateProtocol(state, val = '') {
       state.protocol = val;

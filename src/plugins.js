@@ -8,12 +8,15 @@ export default {
 
     Vue.prototype.$ws = {};
 
-    Vue.prototype.$ws.init = (task) => {
-      const host = store.state.layoutOption.host;
-      const port = store.state.layoutOption.port;
-      const protocol = store.state.layoutOption.protocol;
+    Vue.prototype.$ws.init = (options, task) => {
+      const { host, port, protocol } = options;
+      const final_host = host || store.state.layoutOption.host;
+      const final_port = port || store.state.layoutOption.port;
+      const final_protocol = protocol || store.state.layoutOption.protocol;
       const token = store.state.layoutOption.token;
-      const url = `${protocol === 'https://' ? 'wss:' : 'ws:'}//${host}:${port}/webui/${token}`;
+      const url = `${
+        final_protocol === 'https://' ? 'wss:' : 'ws:'
+      }//${final_host}:${final_port}/webui/${token}`;
       if (wsInstance) return console.warn('WebSocket已经开启，不能重复初始化。');
       wsInstance = new WebSocket(url);
       Vue.prototype.$message.success('WebSocket初始化成功');

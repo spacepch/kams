@@ -73,6 +73,9 @@
             icon="pps-icon-port"
             placeholder="后端端口号"
           ></pps-input>
+          <pps-input clearable :content.sync="configForm.sandBoxPort" placeholder="沙盒测试端口">
+            <template v-slot:prepend><span style="padding: 0 5px">沙盒测试端口</span></template>
+          </pps-input>
           <div><p>警告！若无需分离前后端请谨慎修改！</p></div>
           <div class="submit">
             <pps-button theme="confirm">提交</pps-button>
@@ -125,7 +128,8 @@ export default {
       },
       configForm: {
         host: '',
-        port: ''
+        port: '',
+        sandBoxPort: null
       }
     };
   },
@@ -136,7 +140,8 @@ export default {
       'updatePort',
       'updateProtocol',
       'updateUsername',
-      'updatePassword'
+      'updatePassword',
+      'updateSandBoxPort'
     ]),
     changeTab(flag) {
       this.tabsFlag = flag;
@@ -149,6 +154,8 @@ export default {
       const ssl = this.http_or_https === 'https://';
       const port = this.configForm.port || (ssl ? 443 : 80);
       const host = this.configForm.host.replace(/^(https?:\/\/)/, '');
+      const sandBoxPort = this.configForm.sandBoxPort || 720;
+      this.updateSandBoxPort(sandBoxPort);
       this.updateHost(host);
       this.updatePort(port);
       this.updateProtocol(this.http_or_https);
@@ -230,23 +237,28 @@ export default {
     }
   },
   computed: {
-    ...mapState('layoutOption', ['host', 'port', 'protocol', 'username', 'password']),
+    ...mapState('layoutOption', [
+      'host',
+      'port',
+      'protocol',
+      'username',
+      'password',
+      'sandBoxPort'
+    ]),
     whichTab() {
       return this.tabsFlag === 'login';
     }
   },
   mounted() {
     this.mountBackendConfigFn();
-    this.loginForm = {
-      username: this.username,
-      password: this.password
-    };
-    this.configForm = {
-      host: this.host,
-      port: this.port
-    };
+  },
+  created() {
+    this.loginForm.username = this.username;
+    this.loginForm.password = this.password;
+    this.configForm.host = this.host;
+    this.configForm.port = this.port;
+    this.configForm.sandBoxPort = this.sandBoxPort;
     this.http_or_https = this.protocol || 'https://';
-    console.log(this.host);
   }
 };
 </script>
