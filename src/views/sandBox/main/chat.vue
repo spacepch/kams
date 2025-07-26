@@ -51,10 +51,11 @@
 
 <script>
 import LOGO from '@/assets/favicon-gray.svg';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import kSbMessage from './message.vue';
+// import wsBus from '@/utils/sandBox/wsBus';
 export default {
   name: 'k-chat-main',
   components: { kSbMessage },
@@ -67,21 +68,8 @@ export default {
       admin: new Administrators()
     };
   },
-  props: {
-    chatTarget: {
-      type: Object,
-      default() {
-        return null;
-      }
-    },
-    memberList: {
-      type: Array,
-      default() {
-        return [];
-      }
-    }
-  },
   methods: {
+    ...mapActions('sandBox', ['send']),
     sendMessageFn(e) {
       if (e.key === 'Enter') e.preventDefault();
       const u = new User(this.getCurrentUser);
@@ -91,20 +79,62 @@ export default {
           content: this.message,
           replyMsg: this.replyMsg
         });
-        console.log(res);
+
+        // 获取消息
+        const msg = res.data.message;
+
+        // 角色映射
+        const roleMap = {
+          lord: 'owner',
+          member: 'member',
+          admin: 'admin',
+          'super-admin': 'owner'
+        };
+        const role = u.groups.find((item) => item.id === res.data.gid).role;
+
+        // 发送ws消息
+        this.send({
+          event: 'on_message',
+          time: msg.date,
+          type: 1,
+          messageId: msg.id,
+          message: msg.content,
+          messageAlt: msg.content,
+          userId: msg.role,
+          groupId: res.data.gid,
+          sender: {
+            nickname: u.name,
+            role: roleMap[role]
+          }
+        });
       } else {
         const res = u.sendMessageToFriend({
           id: this.chatTarget.id,
-          content: this.message
+          content: this.message,
+          replyMsg: this.replyMsg
         });
-        // '最近需要快速开发一个微信小程序商城，大家有没有开源的原生小程序前端代码推荐啊。简单的就行。'
-        console.log(res);
+        if (this.chatTarget.id === 'user-super-admin') this.sendMsgToBot(res, u);
       }
       this.message = '';
       this.$refs.input.innerHTML = '';
       this.cancelReplyMsgFn();
       this.$refs.input.focus();
       this.scrollToBottom(true);
+    },
+    sendMsgToBot(msg, sender) {
+      const msg_data = msg.data.message;
+      this.send({
+        event: 'on_message',
+        time: msg_data.date,
+        type: 0,
+        messageId: msg_data.id,
+        message: msg_data.content,
+        messageAlt: msg_data.content,
+        userId: msg.data.sender,
+        sender: {
+          nickname: sender.name
+        }
+      });
     },
     saveRange() {
       const selection = window.getSelection();
@@ -190,7 +220,13 @@ export default {
       return node.contains(container);
     },
     replyMsgFn(msg) {
-      const name = this.admin.getUserById(msg.role).name;
+      console.log(msg);
+      let name;
+      if (this.chatTarget.isGroup) {
+        name = this.admin.getUserById(msg.role).name;
+      } else {
+        name = this.admin.getUserById(msg.sender).name;
+      }
       this.replyMsg = { name, content: msg.content };
       this.$refs.input.focus();
     },
@@ -247,6 +283,21 @@ export default {
         this.$refs.input.focus();
       }
     }
+  },
+  props: {
+    chatTarget: {
+      type: Object,
+      default() {
+        return null;
+      }
+    },
+    memberList: {
+      type: Array,
+      default() {
+        return [];
+      }
+    },
+    ws: {}
   },
   mounted() {
     if (this.$refs.input) {

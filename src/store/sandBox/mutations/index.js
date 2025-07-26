@@ -240,9 +240,16 @@ export default {
     }
     if (state.currentUser === null) state.currentUser = state.users[0];
   },
-
   // 切换对话窗口
   SWITCH_CHAT(state, msg = null) {
     state.currentMsg = msg;
+  },
+
+  // webSocket
+  SET_WS_CONNECTION(state, connection) {
+    state.wsInstance = connection;
+  },
+  SET_CONNECTION_STATUS(state, status) {
+    state.wsStatus = status;
   }
 };

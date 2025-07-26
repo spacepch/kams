@@ -12,15 +12,15 @@ console.error('user: 用户头像功能待完善！');
  */
 export default class User {
   constructor({ numId, name, age, sex, avatar, id }) {
-    this.name = name;
+    this.name = name || this.self().name;
     this.id = id || `user-${numId}`;
-    this.numId = numId;
-    this.age = age;
-    this.sex = sex;
-    this.order = store.state.sandBox.registeredUsersCount;
+    this.numId = numId || this.self().numId;
+    this.age = age || this.self().age;
+    this.sex = sex || this.self().sex;
+    this.order = this.self().order || store.state.sandBox.registeredUsersCount;
     this.avatar = avatar || `https://picsum.photos/id/${this.order}/50/50`;
-    this.groups = [];
-    this.friends = [];
+    this.groups = this.self().groups || [];
+    this.friends = this.self().friends || [];
   }
 
   /**
@@ -203,15 +203,22 @@ export default class User {
    * 发送私聊消息
    * @param {*} param0 { id：好友id, content：消息内容 }
    */
-  sendMessageToFriend({ id, content }) {
+  sendMessageToFriend({ id, content, replyMsg = null }) {
     if (!this.self().friends.some((friend) => friend.id === id)) return false;
     const msgId = nanoid();
     const timestamp = Date.now();
-    const message = { id: msgId, role: ROLE_SELF, receiver: id, content, date: timestamp };
+    const message = {
+      id: msgId,
+      role: ROLE_SELF,
+      receiver: id,
+      content,
+      date: timestamp,
+      replyMsg
+    };
     const msgOption = { sender: this.id, receiver: id, message };
     store.commit('sandBox/SEND_PRIVATE_MESSAGE', msgOption);
     this.receiveFriendMessage({ id, content, msgId, timestamp });
-    return true;
+    return { status: true, data: msgOption };
   }
 
   /**
@@ -253,11 +260,11 @@ export default class User {
       role: this.id,
       isGroup: true,
       content,
-      date: new Date(),
+      date: Date.now(),
       replyMsg
     };
     store.commit('sandBox/SEND_GROUP_MESSAGE', { gid: id, message });
-    return true;
+    return { status: true, data: { gid: id, message } };
   }
 
   /**

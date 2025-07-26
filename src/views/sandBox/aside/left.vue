@@ -28,7 +28,7 @@
             @click="switchUserFn(user.id)"
           >
             <pps-context-menu
-              :menus="[{ label: '发起群聊', uid: `${user.id}`, task: 1 }]"
+              :menus="user.isSuper ? [] : [{ label: '发起群聊', uid: `${user.id}`, task: 1 }]"
               @select="contextMenuFn"
             >
               <template slot="prepend">
@@ -146,8 +146,8 @@
     <!-- 遮罩层 -->
     <div
       class="mask"
-      v-show="isShowMask"
-      v-if="show.isCollapseMsg"
+      v-show="show.isCollapseMsg"
+      v-if="getIsNarrowScreen"
       @click="collapseMsghandler(false)"
     ></div>
 
@@ -628,7 +628,6 @@ export default {
       return isAdded;
     },
     showMessageList() {
-      // console.log('showMessageList');
       const user = new User(this.getCurrentUser);
       if (this.messageMode) {
         return user.getAllGroups();
@@ -639,17 +638,12 @@ export default {
     getFriendListExceptSuper() {
       const list = this.getCurrentUser.friends.filter((friend) => friend.id !== 'user-super-admin');
       return list;
-    },
-    isShowMask() {
-      const narrow = this.$store.state.layoutOption.isNarrowScreen;
-      return narrow && this.show.isCollapseMsg;
     }
   },
-  created() {
+  created() {},
+  mounted() {
     this.collapseMsghandler(true);
-    console.log(this.show.isCollapseMsg);
-  },
-  mounted() {}
+  }
 };
 </script>
 
@@ -789,7 +783,7 @@ export default {
     border-bottom: 2px solid #e9e9e9;
     border-right: 2px solid #e9e9e9;
 
-    @media screen and (max-width: 768px) {
+    @media screen and (max-width: 528px) {
       position: fixed;
       left: 60px;
       // width: calc(100vw - 60px);

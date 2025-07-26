@@ -13,7 +13,7 @@
         <div class="pps-context-menu_prepend" v-if="$slots.prepend">
           <slot name="prepend"></slot>
         </div>
-        <ul class="pps-context-menu_inner">
+        <ul v-if="menus.length" class="pps-context-menu_inner">
           <slot name="item" :menu="menus">
             <li
               class="pps-context-menu-item"

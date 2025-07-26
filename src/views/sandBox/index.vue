@@ -1,5 +1,5 @@
 <template>
-  <k-container class="k-container k-sb-main" direction="horizontal">
+  <k-container v-loading="0" direction="horizontal" class="k-container k-sb-main">
     <!-- 好友、群聊列表 -->
     <sb-left-aside
       ref="leftAsideRef"
@@ -48,7 +48,7 @@
         ></sb-right-aside>
         <!-- 遮罩层 -->
         <div
-          v-if="getIsNarrowScreen"
+          v-if="chatTarget.isGroup"
           v-show="show.isCollapseRight"
           @click="collapseRighthandler()"
           class="mask"
@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import Group from '@/utils/sandBox/group';
@@ -68,6 +68,7 @@ import sbLeftAside from './aside/left.vue';
 import sbRightAside from './aside/right.vue';
 import sbChatMain from './main/chat.vue';
 import grayButton from './ui/grayButton.vue';
+import wsBus from '@/utils/sandBox/wsBus';
 export default {
   name: 'sandBox',
   components: { kContainer, sbLeftAside, sbRightAside, sbChatMain, grayButton },
@@ -90,6 +91,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions('sandBox', ['initWebSocket', 'send', 'close']),
     test() {
       const admin = new Administrators();
       // this.$store.commit('sandBox/CLEAR_USERS'); // 清空用户
@@ -163,7 +165,7 @@ export default {
     },
     showUserDetailFn(userInfo) {},
     handleMenuAction(action) {
-      const { actionType, currentUer, targetUser, groupId } = action;
+      const { actionType, currentUser, targetUser, groupId } = action;
       const actionMap = {
         VIEW_PROFILE: this.viewUserProfile,
         ADD_FRIEND: this.addFriend,
@@ -173,36 +175,37 @@ export default {
         MUTE_USER: this.muteMember,
         UNMUTE_USER: this.unmuteMember,
         REVOKE_ADMIN: this.revokeAdmin,
-        SET_ADMIN: this.setAdmin
+        SET_ADMIN: this.setAdmin,
+        MUTE_GROUP: this.handleMuteGroup
       };
       if (actionMap[actionType]) {
-        actionMap[actionType](targetUser, groupId, currentUer);
+        actionMap[actionType](targetUser, groupId, currentUser);
       }
     },
-    viewUserProfile(targetUser, groupId, currentUer) {
+    viewUserProfile(targetUser, groupId, currentUser) {
       this.$refs.leftAsideRef.showUserDetailFn(targetUser);
     },
-    mentionUser(targetUser, groupId, currentUer) {
+    mentionUser(targetUser, groupId, currentUser) {
       this.$refs.chatMainRef.mentionMember(targetUser.name);
     },
-    addFriend(targetUser, groupId, currentUer) {
+    addFriend(targetUser, groupId, currentUser) {
       console.log('addFriend');
       const user = new User(this.getCurrentUser);
       const res = user.addFriend(targetUser.id);
       if (res) this.$message.success('添加成功！');
       else this.$message.error('添加失败！');
     },
-    removeFriend(targetUser, groupId, currentUer) {
+    removeFriend(targetUser, groupId, currentUser) {
       console.log('removeFriend');
       const user = new User(this.getCurrentUser);
       user.removeFriendById(targetUser.id);
     },
-    muteMember(targetUser, groupId, currentUer) {
+    muteMember(targetUser, groupId, currentUser) {
       console.log('muteMember', groupId, targetUser);
       const user = new User(this.getCurrentUser);
       user.muteMemberById(groupId, targetUser.id);
     },
-    unmuteMember(targetUser, groupId, currentUer) {
+    unmuteMember(targetUser, groupId, currentUser) {
       const user = new User(this.getCurrentUser);
       const res = user.unmuteMemberById(groupId, targetUser.id);
       if (res) {
@@ -211,7 +214,13 @@ export default {
         console.log('unmuteMember fail');
       }
     },
-    kickMember(targetUser, groupId, currentUer) {
+    handleMuteGroup(action, groupId, status) {
+      const isMute = action ? action.enable : status;
+      const user = new User(this.getCurrentUser);
+      const res = user.handleMuteGroupById(this.chatTarget.id, isMute);
+      console.log(res);
+    },
+    kickMember(targetUser, groupId, currentUser) {
       console.log('kickMember');
       const user = new User(this.getCurrentUser);
       const res = user.kickMemberById({ groupId, expellee: targetUser.id });
@@ -221,7 +230,7 @@ export default {
         console.log('kickMember fail');
       }
     },
-    setAdmin(targetUser, groupId, currentUer) {
+    setAdmin(targetUser, groupId, currentUser) {
       console.log('setAdmin');
       const res = new User(this.getCurrentUser).setGroupAdmin({
         gid: groupId,
@@ -229,10 +238,37 @@ export default {
       });
       console.log(res);
     },
-    revokeAdmin(targetUser, groupId, currentUer) {
+    revokeAdmin(targetUser, groupId, currentUser) {
       console.log('revokeAdmin');
       const res = new User(this.getCurrentUser).revokeGroupAdmin(groupId, targetUser.id);
       console.log(res);
+    },
+    receiveWsMsg(msg) {
+      const actionsMap = {
+        send_private_msg: this.botSendPrivateMsg,
+        send_group_msg: this.botSendGroupMsg,
+        set_group_whole_ban: this.handleMuteGroup
+      };
+
+      if (actionsMap[msg.action]) {
+        actionsMap[msg.action](msg);
+      }
+    },
+    botSendPrivateMsg(msg) {
+      const user = new User({ numId: 'super-admin' });
+      user.sendMessageToFriend({
+        id: msg.userId,
+        content: msg.message,
+        replyMsg: null
+      });
+    },
+    botSendGroupMsg(msg) {
+      const user = new User({ numId: 'super-admin' });
+      user.sendMessageToGroup({
+        id: msg.groupId,
+        content: msg.message,
+        replyMsg: null
+      });
     }
   },
   computed: {
@@ -249,10 +285,21 @@ export default {
       return this.chatTarget.isGroup ? `（${this.getMemberList.length}）` : null;
     }
   },
-  mounted() {
+  created() {
     this.$store.commit('sandBox/SWITCH_USER');
     this.$store.commit('sandBox/SWITCH_CHAT');
+    // 初始化ws连接
+    this.initWebSocket();
+
+    wsBus.$on('onmessage', this.receiveWsMsg);
+  },
+  mounted() {
     this.show.isCollapseRight = !this.getIsNarrowScreen;
+  },
+  beforeDestroy() {
+    console.log('beforeDestroy');
+    wsBus.$off('onmessage', this.receiveWsMsg);
+    this.close();
   }
 };
 </script>

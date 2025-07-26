@@ -26,6 +26,11 @@
                 </svg>
               </el-tooltip>
             </gray-button>
+            <gray-button v-if="isShowMuteBtn" class="icon-btn" @click.native="muteGroup">
+              <el-tooltip effect="dark" content="全体禁言" placement="top">
+                <i :class="isMuteAll"></i>
+              </el-tooltip>
+            </gray-button>
             <gray-button class="icon-btn leave" @click.native="leaveGroupFn()">
               <el-tooltip effect="dark" content="退出群聊" placement="top">
                 <i class="layui-icon layui-icon-close"></i>
@@ -145,6 +150,15 @@ export default {
         .catch((error) => {
           console.log(error);
         });
+    },
+    muteGroup() {
+      const isMute = new User(this.getCurrentUser).getGroupMessageById(this.chatTarget.id).isMute;
+      console.log('m', isMute);
+      this.$emit('handleMenuAction', {
+        actionType: 'MUTE_GROUP',
+        groupId: this.chatTarget.id,
+        currentUser: !isMute
+      });
     }
   },
   computed: {
@@ -170,6 +184,14 @@ export default {
     },
     getGroupMemberLength() {
       return this.memberList.length;
+    },
+    isMuteAll() {
+      const isMute = this.group.getAllMessage().isMute;
+      return isMute ? 'el-icon-turn-off-microphone' : 'el-icon-microphone';
+    },
+    isShowMuteBtn() {
+      const u = new User(this.getCurrentUser);
+      return u._isAdmin(this.chatTarget.id);
     }
   },
   mounted() {
@@ -211,6 +233,7 @@ export default {
 
     .btn-area {
       display: flex;
+      // justify-content: space-between;
     }
 
     .icon-btn {
@@ -219,10 +242,13 @@ export default {
       font-weight: bold;
       margin: 0;
       background: rgb(255, 255, 255);
+
+      & + .icon-btn {
+        margin-left: 10px;
+      }
     }
 
     .leave {
-      margin-left: 10px;
       color: rgb(247, 76, 108);
     }
   }

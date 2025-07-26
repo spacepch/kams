@@ -2,10 +2,6 @@ import Group from '../group';
 import User from '../user';
 import store from '@/store';
 export default class Administrators {
-  constructor(currentUser = null) {
-    store.commit('sandBox/SWITCH_USER', currentUser);
-  }
-
   // 操作用户
   getAllUser() {
     return store.getters['sandBox/getAllUser'];

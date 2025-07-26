@@ -19,9 +19,11 @@
       border-top-right-radius: var(--radius);
       background: #fff;
       min-height: 20px;
-      border-bottom: 1px solid #0505050f;
-      margin-bottom: 4px;
-      padding-bottom: 4px;
+      &:not(:last-child) {
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #0505050f;
+      }
     }
     .pps-context-menu_append {
       display: flex;

@@ -17,5 +17,18 @@ export default new Vuex.Store({
     command,
     sandBox
   },
-  plugins: [createPersistedState()]
+  plugins: [
+    createPersistedState({
+      // paths: ['webSocketOption', 'layoutOption', 'sandBox']
+      reducer: (state) => {
+        const persistedState = { ...state };
+        delete persistedState.command;
+        delete persistedState.modulesDetail;
+        delete persistedState.webSocketOption;
+        const { wsInstance, wsStatus, ...persistedSandBox } = persistedState.sandBox;
+        persistedState.sandBox = persistedSandBox;
+        return persistedState;
+      }
+    })
+  ]
 });

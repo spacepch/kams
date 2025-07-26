@@ -21,7 +21,9 @@
               </span>
               <span>{{ getUserNickname }}</span>
             </div>
-            <div class="content">{{ message.content || '\u00A0' }}</div>
+            <div class="content">
+              <pre>{{ message.content || '\u00A0' }}</pre>
+            </div>
             <div v-if="message.replyMsg?.name" class="reply">
               {{ message.replyMsg.name }}：{{ message.replyMsg.content }}
             </div>

@@ -1,5 +1,6 @@
 import mutations from './mutations';
 import getters from './getters';
+import actions from './actions';
 const superAdmin = {
   id: 'user-super-admin',
   name: '超级管理员',
@@ -16,14 +17,17 @@ export default {
   state: {
     registeredUsersCount: 0,
     users: [superAdmin],
-    currentUser: {},
+    currentUser: null,
     currentMsg: null,
     groups: [],
     privateMsg: {
       [superAdmin.id]: {}
     },
-    groupMsg: {}
+    groupMsg: {},
+    wsInstance: null,
+    wsStatus: 'disconnected'
   },
   mutations,
-  getters
+  getters,
+  actions
 };
