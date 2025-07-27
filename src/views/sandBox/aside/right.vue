@@ -5,6 +5,7 @@
         <div class="member-title">
           <div class="title">群聊成员-{{ getGroupMemberLength }}人</div>
           <div class="btn-area">
+            <!-- 邀请好友 -->
             <gray-button class="icon-btn" @click.native="isShowFriendList = true">
               <el-tooltip effect="dark" content="邀请加群" placement="top">
                 <svg
@@ -26,11 +27,17 @@
                 </svg>
               </el-tooltip>
             </gray-button>
+            <!-- 全体禁言 -->
             <gray-button v-if="isShowMuteBtn" class="icon-btn" @click.native="muteGroup">
-              <el-tooltip effect="dark" content="全体禁言" placement="top">
-                <i :class="isMuteAll"></i>
+              <el-tooltip
+                effect="dark"
+                :content="isMuteAll ? '解开禁言' : '全体禁言'"
+                placement="top"
+              >
+                <i :class="muteBtnClass"></i>
               </el-tooltip>
             </gray-button>
+            <!-- 退出群聊 -->
             <gray-button class="icon-btn leave" @click.native="leaveGroupFn()">
               <el-tooltip effect="dark" content="退出群聊" placement="top">
                 <i class="layui-icon layui-icon-close"></i>
@@ -186,8 +193,10 @@ export default {
       return this.memberList.length;
     },
     isMuteAll() {
-      const isMute = this.group.getAllMessage().isMute;
-      return isMute ? 'el-icon-turn-off-microphone' : 'el-icon-microphone';
+      return this.group.getAllMessage().isMute;
+    },
+    muteBtnClass() {
+      return this.isMuteAll ? 'el-icon-turn-off-microphone' : 'el-icon-microphone';
     },
     isShowMuteBtn() {
       const u = new User(this.getCurrentUser);

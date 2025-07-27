@@ -604,6 +604,7 @@ export default {
         this.updateChatTarget(index, false, friend.name);
       }
       this.$emit('switchMsg', chat);
+      this.collapseMsghandler(!this.getIsNarrowScreen);
     },
     showUserDetailFn(userInfo) {
       this.userDetailDate = {};
@@ -640,6 +641,15 @@ export default {
       return list;
     }
   },
+  watch: {
+    getIsNarrowScreen(val) {
+      if (val) {
+        this.show.isCollapseMsg = false;
+      } else {
+        this.show.isCollapseMsg = true;
+      }
+    }
+  },
   created() {},
   mounted() {
     this.collapseMsghandler(true);
@@ -655,7 +665,7 @@ export default {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 100dvw;
     height: 100%;
     background: #000;
     opacity: 0.5;
@@ -786,7 +796,7 @@ export default {
     @media screen and (max-width: 528px) {
       position: fixed;
       left: 60px;
-      // width: calc(100vw - 60px);
+      // min-width: calc(100dvw - 60px); // 无法触发过渡效果
       z-index: 4;
     }
 

@@ -42,7 +42,6 @@ import { mapMutations } from 'vuex';
 import kAside from '@/components/layout/aside.vue';
 import kMenuItem from '@/components/menus/menu-item.vue';
 import kMenu from '@/components/menus/';
-// import { Dialog } from '@/ppsUI/packages';
 
 export default {
   name: 'k-aside',

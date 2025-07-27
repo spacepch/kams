@@ -1,5 +1,5 @@
 <template>
-  <k-container v-loading="0" direction="horizontal" class="k-container k-sb-main">
+  <k-container v-loading="0" direction="horizontal" class="k-sb-container">
     <!-- 好友、群聊列表 -->
     <sb-left-aside
       ref="leftAsideRef"
@@ -7,7 +7,7 @@
       :updateCollapseMsg="updateCollapseMsgFn"
       @switchMsg="switchMsgCallback"
     ></sb-left-aside>
-    <k-container v-show="show.isShowChatBox" direction="vertical" style="width: 100%">
+    <k-container v-show="show.isShowChatBox" direction="vertical" class="k-sb-main">
       <!-- 聊天窗口页头 -->
       <header class="k-chat-header" v-show="show.isShowChatBox">
         <gray-button
@@ -49,7 +49,7 @@
         <!-- 遮罩层 -->
         <div
           v-if="chatTarget.isGroup"
-          v-show="show.isCollapseRight"
+          v-show="isShowRightMask"
           @click="collapseRighthandler()"
           class="mask"
         ></div>
@@ -79,7 +79,7 @@ export default {
         isShowGroups: true,
         isShowChatBox: true,
         isCollapseMsg: true,
-        isCollapseRight: false
+        isCollapseRight: true
       },
       screen: { width: 0, height: 0 },
       admin: new Administrators(),
@@ -147,6 +147,7 @@ export default {
     },
     collapseMsghandler() {
       this.$refs.leftAsideRef.collapseMsghandler(true);
+      this.show.isCollapseRight = false;
     },
     collapseRighthandler() {
       this.show.isCollapseRight = !this.show.isCollapseRight;
@@ -283,6 +284,24 @@ export default {
     },
     getGroupMemberLength() {
       return this.chatTarget.isGroup ? `（${this.getMemberList.length}）` : null;
+    },
+    isShowRightMask() {
+      return this.getIsNarrowScreen && this.show.isCollapseRight;
+    },
+    isShowRightAside() {
+      return this.show.isCollapseRight;
+    }
+  },
+  watch: {
+    getIsNarrowScreen: {
+      handler(val) {
+        if (val) {
+          this.show.isCollapseRight = false;
+        } else {
+          this.show.isCollapseRight = true;
+        }
+      },
+      immediate: true
     }
   },
   created() {
@@ -294,7 +313,7 @@ export default {
     wsBus.$on('onmessage', this.receiveWsMsg);
   },
   mounted() {
-    this.show.isCollapseRight = !this.getIsNarrowScreen;
+    // this.show.isCollapseRight = !this.getIsNarrowScreen;
   },
   beforeDestroy() {
     console.log('beforeDestroy');
@@ -311,29 +330,30 @@ export default {
 .k-container ::v-deep div {
   box-sizing: border-box;
 }
-.k-container {
+.k-sb-container {
   --sb-header-height: 60px;
-}
-.k-sb-main {
-  // height: 100%;
-  // flex: 1;
-}
-.k-chat-main {
-  position: relative;
-  flex-grow: 1;
+  .k-sb-main {
+    // height: 100%;
+    flex: 1;
+    min-width: 0;
+    .k-chat-main {
+      position: relative;
+      flex-grow: 1;
 
-  .mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100%;
-    background: #000;
-    opacity: 0.5;
-    z-index: 3;
+      .mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        opacity: 0.5;
+        z-index: 3;
+      }
+    }
   }
 }
-.k-container ::v-deep .k-chat-header {
+.k-sb-container ::v-deep .k-chat-header {
   height: var(--sb-header-height);
 }
 .k-chat-header {

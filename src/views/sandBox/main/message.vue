@@ -1,9 +1,9 @@
 <template>
   <div class="k-sb-message" :class="{ 'k-sb-message-self': isSelf }">
-    <div class="date"><span v-trans-time="message.date"></span></div>
     <div class="message">
+      <!-- 头像 -->
       <pps-context-menu @select="avatarContextMenuFn" :menus="getUserMenuItems()">
-        <div slot="content">
+        <div style="width: 36px" slot="content">
           <pps-avatar
             size="36"
             @click="viewUserProfile()"
@@ -12,24 +12,24 @@
           ></pps-avatar>
         </div>
       </pps-context-menu>
-      <pps-context-menu @select="testContextMenuFn" :menus="getTextMenus">
-        <div slot="content">
-          <div class="container">
-            <div class="nickname">
-              <span v-if="chatTarget.isGroup" :class="getGroupSenderRole.role" class="groupRole">
-                {{ getRole }}
-              </span>
-              <span>{{ getUserNickname }}</span>
-            </div>
-            <div class="content">
-              <pre>{{ message.content || '\u00A0' }}</pre>
-            </div>
-            <div v-if="message.replyMsg?.name" class="reply">
-              {{ message.replyMsg.name }}：{{ message.replyMsg.content }}
-            </div>
-          </div>
+      <!-- 气泡 -->
+      <div class="container">
+        <div class="nickname_wrapper">
+          <span v-if="chatTarget.isGroup" :class="getGroupSenderRole.role" class="groupRole">
+            {{ getRole }}
+          </span>
+          <span class="nickname">{{ getUserNickname }}</span>
+          <span class="date" v-trans-time="message.date"></span>
         </div>
-      </pps-context-menu>
+        <pps-context-menu @select="testContextMenuFn" :menus="getTextMenus">
+          <div class="content" slot="content">
+            <pre>{{ message.content || '\u00A0' }}</pre>
+          </div>
+        </pps-context-menu>
+        <div v-if="message.replyMsg?.name" class="reply">
+          {{ message.replyMsg.name }}：{{ message.replyMsg.content }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -80,10 +80,13 @@ export default {
       if (task === 0) {
         if (this.message.isGroup) {
           const res = user.deleteGroupMessage({ id: this.chatTarget.id, msgId: this.message.id });
-          console.log(res);
+          if (res) this.$message.success('删除成功');
+          else this.$message.error('删除失败！');
         } else {
+          console.log(this.message.receiver, this.message.id);
           const res = user.deleteFriendMessage(this.message.receiver, this.message.id);
-          console.log(res);
+          if (res) this.$message.success('删除成功');
+          else this.$message.error('删除失败！');
         }
       } else if (task === 1) {
         this.$emit('replyMsg', this.message);
@@ -147,19 +150,11 @@ export default {
 
 <style lang="scss" scoped>
 .k-sb-message {
+  display: flex;
   padding: 10px 10px;
   box-sizing: border-box;
   &::selection {
     background: var(--theme-hover-color);
-  }
-  .date {
-    width: 100%;
-    text-align: center;
-    margin-top: 5px;
-    user-select: none;
-    span {
-      color: #7a7a7a;
-    }
   }
   .message {
     display: flex;
@@ -168,20 +163,36 @@ export default {
     gap: 8px;
 
     .container {
-      flex: 1;
-      .nickname {
+      width: calc(100% - 44px);
+      .nickname_wrapper {
         color: #7a7a7a;
         user-select: none;
         display: flex;
         align-items: center;
         flex-direction: row;
+        gap: 5px;
+
+        span {
+          display: inline-flex;
+          align-items: flex-end;
+          height: 1.2em;
+          white-space: nowrap;
+        }
+        .nickname {
+          font-size: 12px;
+        }
+        .date {
+          font-size: 11px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
 
         .groupRole {
           font-size: 11px;
           padding: 2px;
-          line-height: 1rem;
+          line-height: 1.2em;
           border-radius: 4px;
-          margin-inline-end: 4px;
         }
         .admin {
           background: var(--sb-admin-bg);
@@ -200,16 +211,24 @@ export default {
           color: var(--sb-reply-color);
         }
       }
+      .pps-context-menu-area {
+        width: 100%;
+      }
       .content {
-        width: fit-content;
+        max-width: fit-content;
+        width: 100%;
+        flex-shrink: 1;
         background: #fff;
         padding: 8px;
-        text-wrap-mode: wrap;
         border-radius: 8px;
         margin-top: 4px;
+
+        pre {
+          white-space: pre-wrap;
+          word-wrap: break-word;
+        }
       }
       .reply {
-        width: fit-content;
         font-size: 12px;
         border-radius: 4px;
         padding: 6px 8px;
@@ -217,6 +236,9 @@ export default {
         background: var(--sb-reply-bg);
         color: var(--sb-reply-color);
         user-select: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
     & + .k-sb-message {
@@ -225,12 +247,12 @@ export default {
   }
 }
 .k-sb-message-self {
+  justify-content: flex-end;
   .message {
     flex-direction: row-reverse;
-    margin-left: auto;
 
     .container {
-      .nickname {
+      .nickname_wrapper {
         text-align: end;
         flex-direction: row-reverse;
       }

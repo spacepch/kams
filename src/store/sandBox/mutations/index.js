@@ -166,7 +166,8 @@ export default {
     if (!msgId) return (state.privateMsg[sender][receiver] = []);
 
     const index = state.privateMsg[sender][receiver].findIndex((msg) => msg.id === msgId);
-    if (index > -1) return console.log('没有此消息');
+    console.log(index);
+    if (index <= -1) return console.log('没有此消息');
     state.privateMsg[sender][receiver].splice(index, 1);
   },
   CREATE_GROUP_MESSAGE(state, group) {
@@ -191,6 +192,7 @@ export default {
     if (!state.groupMsg[id].messages.length) return false;
 
     const index = state.groupMsg[id].messages.findIndex((msg) => msg.id === msgId);
+    if (index <= -1) return console.log('没有此消息');
     state.groupMsg[id].messages.splice(index, 1);
   },
   HANDLE_MUTE_GROUP(state, { gid, isMute }) {

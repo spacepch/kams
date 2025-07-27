@@ -1,7 +1,7 @@
 <template>
   <el-container class="main-container" v-resize-ob="resizeFn">
     <k-aside></k-aside>
-    <el-container direction="vertical">
+    <el-container class="kams-main-container" direction="vertical">
       <k-header></k-header>
       <el-main :class="{ isPadding, lessPadding: getIsNarrowScreen }">
         <transition mode="out-in">
@@ -118,6 +118,13 @@ export default {
 }
 .main-container {
   height: 100%;
+  max-width: 100vw;
+
+  .kams-main-container{
+    flex-basis: 0;
+    flex: 1;
+  }
+
   .el-main {
     padding-top: 0;
     padding-bottom: 0;
