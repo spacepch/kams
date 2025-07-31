@@ -36,10 +36,10 @@
                   <pps-icon icon="pps-icon-account" @click="showUserDetailFn(user)"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="好友" placement="top">
-                  <pps-icon icon="pps-icon-contact" @click="show.friendList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-contact" @click="showFriendListFn(user)"></pps-icon>
                 </el-tooltip>
                 <el-tooltip class="item" effect="dark" content="群聊" placement="top">
-                  <pps-icon icon="pps-icon-group" @click="show.groupList = true"></pps-icon>
+                  <pps-icon icon="pps-icon-group" @click="showGroupListFn(user)"></pps-icon>
                 </el-tooltip>
               </template>
               <div v-if="!user.isSuper" class="delete-user" slot="append">
@@ -267,9 +267,9 @@
     </pps-dialog>
 
     <!-- 好友列表 -->
-    <pps-dialog :show.sync="show.friendList" title="好友列表">
+    <pps-dialog :show.sync="show.friendList" title="好友列表" :callback="closeUserInfoFn">
       <template v-slot:content>
-        <el-table :show-header="true" :data="getCurrentUser.friends">
+        <el-table :show-header="true" :data="selectFreindLIst">
           <el-table-column align="center" label="头像">
             <template slot-scope="scope">
               <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
@@ -293,9 +293,9 @@
     </pps-dialog>
 
     <!-- 群聊列表 -->
-    <pps-dialog :show.sync="show.groupList" title="群聊列表">
+    <pps-dialog :show.sync="show.groupList" title="群聊列表" :callback="closeUserInfoFn">
       <template v-slot:content>
-        <el-table :data="curUserGroupListFn()">
+        <el-table :data="selcetGroupList">
           <el-table-column align="center" label="群聊头像">
             <template slot-scope="scope">
               <pps-avatar :src="scope.row.avatar" size="40"></pps-avatar>
@@ -306,8 +306,8 @@
           <el-table-column align="center" label="操作">
             <template slot-scope="{ row }">
               <pps-button
-                :disabled="row.lord !== getCurrentUser.id"
-                v-if="row.lord === getCurrentUser.id"
+                :disabled="row.lord !== userDetailDate.id"
+                v-if="row.lord === userDetailDate.id"
                 theme="danger"
                 @click="removeGroupFn(row)"
               >
@@ -321,7 +321,7 @@
     </pps-dialog>
 
     <!-- 用户信息 -->
-    <pps-dialog :show.sync="show.userInfo" title="用户信息">
+    <pps-dialog :show.sync="show.userInfo" title="用户信息" :callback="closeUserInfoFn">
       <template v-slot:content>
         <div class="user-info-wrapper">
           <img class="user-avatar" :src="userDetailDate.avatar" alt="" />
@@ -432,10 +432,10 @@ export default {
       this.$refs.msgMenuRef.activeIndex = null;
       this.$store.commit('sandBox/SWITCH_CHAT');
       this.updateChatTarget(null, false, null);
+      this.collapseMsghandler(true);
     },
     removeUserFn(id) {
-      const admin = new Administrators();
-      admin.removeUserById(id);
+      this.admin.removeUserById(id);
       this.$store.commit('sandBox/SWITCH_USER');
     },
     createUserFn() {
@@ -470,11 +470,10 @@ export default {
       this.cancelCreateUserFn();
     },
     createGroupFn() {
-      const admin = new Administrators();
-      const res = admin.createGroup({
+      const res = this.admin.createGroup({
         id: this.createGroup.id,
         name: this.createGroup.name,
-        lord: this.getCurrentUser.id,
+        lord: this.userDetailDate.id,
         avatar: this.createGroup.avatar,
         members: this.createGroup.checkList
       });
@@ -502,8 +501,12 @@ export default {
     },
     contextMenuFn(menu) {
       this.removeUser = menu.uid;
-      if (menu.task === 2) this.show.removeUser = true;
-      if (menu.task === 1) this.show.createGroup = true;
+      if (menu.task === 2) {
+        this.show.removeUser = true;
+      } else if (menu.task === 1) {
+        this.userDetailDate = this.admin.getUserById(menu.uid);
+        this.show.createGroup = true;
+      }
     },
     toggleMsgTabFn(tab) {
       this.messageMode = tab;
@@ -533,13 +536,20 @@ export default {
           if (group) {
             const self = this.getCurrentUser;
             const isAdded = self.groups.some((g) => g.id === group.id);
+            console.log(isAdded);
             this.tableData.push({ ...group, isAdded });
           }
           break;
         }
-        case 2:
-          // this.tableData = admin.getAllRobots();
+        case 2: {
+          const user = admin.getUserById(`user-${id}`);
+          if (user && user.isSuper) {
+            const self = this.getCurrentUser;
+            const isAdded = self.friends.some((f) => f.id === user.id);
+            this.tableData.push({ ...user, isAdded });
+          }
           break;
+        }
       }
     },
     closeAddObjDialogFn() {
@@ -550,9 +560,14 @@ export default {
     addFriendFn(id) {
       const user = new User(this.getCurrentUser);
       switch (this.searchDialog.index) {
-        case 0:
-          user.addFriend(id);
+        case 0: {
+          const targetUser = this.admin.getUserById(id);
+          this.$emit('handleMenuAction', {
+            targetUser,
+            actionType: 'ADD_FRIEND'
+          });
           break;
+        }
         case 1:
           user.addGroupById(id);
           break;
@@ -562,33 +577,36 @@ export default {
       }
     },
     removeFriendFn(fid) {
-      const user = new User(this.getCurrentUser);
-      user.removeFriendById(fid);
+      const targetUser = this.admin.getUserById(fid);
+      this.$emit('handleMenuAction', {
+        targetUser,
+        actionType: 'REMOVE_FRIEND',
+        currentUser: this.userDetailDate
+      });
     },
     emitTabUpdate() {
       this.$refs['k-tab'].changeTabFn();
     },
     deleteFriendMsgFn(friend) {
       const curUser = new User(this.getCurrentUser);
-      console.log(curUser.deleteFriendMessage(friend.id));
+      const res = curUser.deleteFriendMessage(friend.id);
+      console.log('删除消息', res);
     },
     removeGroupFn(group) {
-      const user = new User(this.getCurrentUser);
-      const res = user.removeGroupById(group.id);
-      if (!res) {
-        this.$dialog({ title: '警告', content: '群聊删除失败！' });
-      }
+      const targetUser = new User(this.userDetailDate);
+      this.$emit('handleMenuAction', {
+        targetUser,
+        groupId: group.id,
+        actionType: 'REMOVE_GROUP'
+      });
     },
     leaveGroupFn(group) {
-      const user = new User(this.getCurrentUser);
-      const res = user.leaveGroupById(group.id);
-      if (!res) {
-        this.$dialog({ title: '警告', content: '群聊退出失败！' });
-      }
-    },
-    curUserGroupListFn() {
-      const group_list = new User(this.getCurrentUser).getAllGroups();
-      return group_list;
+      const targetUser = new User(this.userDetailDate);
+      this.$emit('handleMenuAction', {
+        targetUser,
+        groupId: group.id,
+        actionType: 'LEAVE_GROUP'
+      });
     },
     selectMsgFn({ index }) {
       const user = new User(this.getCurrentUser);
@@ -607,9 +625,19 @@ export default {
       this.collapseMsghandler(!this.getIsNarrowScreen);
     },
     showUserDetailFn(userInfo) {
-      this.userDetailDate = {};
       Object.assign(this.userDetailDate, userInfo);
       this.show.userInfo = true;
+    },
+    closeUserInfoFn() {
+      this.userDetailDate = {};
+    },
+    showFriendListFn(user) {
+      this.userDetailDate = user;
+      this.show.friendList = true;
+    },
+    showGroupListFn(user) {
+      this.userDetailDate = user;
+      this.show.groupList = true;
     }
   },
   computed: {
@@ -637,8 +665,19 @@ export default {
       }
     },
     getFriendListExceptSuper() {
-      const list = this.getCurrentUser.friends.filter((friend) => friend.id !== 'user-super-admin');
+      const targetUser = this.admin.getUserById(this.userDetailDate.id);
+      const list = targetUser.friends.filter((friend) => friend.id !== 'user-super-admin');
       return list;
+    },
+    selectFreindLIst() {
+      const user = new User(this.userDetailDate);
+      const friend_list = user.friends;
+      return friend_list;
+    },
+    selcetGroupList() {
+      const user = new User(this.userDetailDate);
+      const group_list = user.getAllGroups();
+      return group_list;
     }
   },
   watch: {

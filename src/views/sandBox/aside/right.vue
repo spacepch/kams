@@ -45,6 +45,7 @@
             </gray-button>
           </div>
         </div>
+
         <template #inner>
           <ul class="member-list">
             <li
@@ -111,7 +112,7 @@ export default {
   data() {
     return {
       admin: new Administrators(),
-      group: new Group({ id: this.chatTarget.id }),
+      group: null,
       isShowFriendList: false
     };
   },
@@ -123,7 +124,6 @@ export default {
       const menu = getVisibleMenuItems(curUer, user, group);
       return menu;
     },
-    handleMenuAction() {},
     viewUserProfile(user) {
       this.$emit('handleMenuAction', {
         targetUser: user,
@@ -131,12 +131,11 @@ export default {
       });
     },
     inviteFriendFn(user) {
-      const curUser = new User(this.getCurrentUser);
-      const res = curUser.inviteUserToGroup({
-        groupId: this.chatTarget.id,
-        invitee: user.id
+      this.$emit('handleMenuAction', {
+        targetUser: user,
+        actionType: 'INVITE_FRIEND',
+        groupId: this.chatTarget.id
       });
-      console.log(res);
     },
     isInvited(user) {
       const isEnter = new Group({ id: this.chatTarget.id }).getMemberById(user.id);
@@ -146,13 +145,21 @@ export default {
     leaveGroupFn() {
       this.$dialog({ title: '警告', content: '确定要退出群聊吗？' })
         .then((action) => {
-          const user = new User(this.getCurrentUser);
-          let res;
-          console.log('user', this.group.lord, user.id);
-          if (this.group.lord === user.id) res = user.removeGroupById(this.chatTarget.id);
-          else res = user.leaveGroupById(this.chatTarget.id);
-          if (res) this.$message.success('退出群聊成功！');
-          else this.$message.error('退出群聊失败！');
+          const user = this.getCurrentUser;
+          console.log(this.group, user);
+          if (this.group.lord === user.id) {
+            this.$emit('handleMenuAction', {
+              actionType: 'REMOVE_GROUP',
+              groupId: this.chatTarget.id,
+              targetUser: user
+            });
+          } else {
+            this.$emit('handleMenuAction', {
+              actionType: 'LEAVE_GROUP',
+              groupId: this.chatTarget.id,
+              targetUser: user
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -160,7 +167,7 @@ export default {
     },
     muteGroup() {
       const isMute = new User(this.getCurrentUser).getGroupMessageById(this.chatTarget.id).isMute;
-      console.log('m', isMute);
+
       this.$emit('handleMenuAction', {
         actionType: 'MUTE_GROUP',
         groupId: this.chatTarget.id,
@@ -203,6 +210,9 @@ export default {
       return u._isAdmin(this.chatTarget.id);
     }
   },
+  created() {
+    this.group = new Group({ id: this.chatTarget.id });
+  },
   mounted() {
     // console.log(this.sortedMemberList);
   }
@@ -213,7 +223,7 @@ export default {
 .right-aside-wapper {
   z-index: 4;
   height: 100%;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 528px) {
     position: absolute;
     right: 0;
   }
@@ -318,7 +328,6 @@ export default {
 .v-enter,
 .v-leave-to {
   width: 0;
-
   @media screen and (max-width: 768px) {
     right: -250px;
   }

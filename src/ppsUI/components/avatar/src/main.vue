@@ -3,7 +3,14 @@
     <a v-if="href" class="pps-avatar-link" :href="href" title="" :target="href ? '_blank' : ''">
       <img :src="src" alt="" class="pps-avatar-img" :width="`${size}px`" />
     </a>
-    <img v-else :src="src" alt="" class="pps-avatar-img" :width="`${size}px`" />
+    <img
+      v-else
+      :src="src"
+      alt=""
+      class="pps-avatar-img"
+      :width="`${size}px`"
+      :height="`${size}px`"
+    />
   </div>
 </template>
 

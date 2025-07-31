@@ -63,7 +63,7 @@ export const tranRoleMixin = {
       const roleMap = {
         lord: '群主',
         admin: '管理员',
-        'super-admin': '超级管理员',
+        'super-admin': 'bot',
         expellee: '已退群'
       };
       return roleMap[role] || '';

@@ -3,6 +3,11 @@
     <template v-if="getCurrentMsg">
       <!-- 聊天内容 -->
       <div ref="chatBox" class="k-chat-box pps-scrollbar">
+        <el-alert v-if="isTalkWithBot" title="温馨提示！" center show-icon close-text="知道了">
+          输入
+          <strong class="danger-text">/help</strong>
+          查看所有bot指令
+        </el-alert>
         <k-sb-message
           v-for="item in messageList"
           :message="item"
@@ -73,7 +78,6 @@ export default {
 
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
-
     messagingEnabled() {
       if (this.chatTarget.isGroup) {
         const curMember = new User(this.getCurrentUser);
@@ -85,11 +89,9 @@ export default {
       }
       return true;
     },
-
     messagingPlaceholder() {
       return this.messagingEnabled ? '请输入消息...' : '禁言中...';
     },
-
     messageList() {
       const cmsg = this.getCurrentMsg;
       if (!cmsg) return [];
@@ -100,6 +102,9 @@ export default {
         messageList = cmsg.messages;
       }
       return messageList;
+    },
+    isTalkWithBot() {
+      return true;
     }
   },
 
@@ -113,7 +118,6 @@ export default {
       this.saveRange(); // 保存当前光标位置
       this.updateMessage();
     },
-
     // 更新消息内容
     updateMessage() {
       this.$nextTick(() => {
@@ -123,7 +127,6 @@ export default {
         }
       });
     },
-
     // 获取纯文本内容（保留mention标签）
     getTextContent(element) {
       let content = '';
@@ -147,7 +150,6 @@ export default {
 
       return content;
     },
-
     // 设置输入框内容（不会影响光标位置）
     setInputContent(content, maintainCursor = true) {
       const input = this.$refs.input;
@@ -167,7 +169,6 @@ export default {
         });
       }
     },
-
     // 保存当前光标位置
     saveCurrentRange() {
       const selection = window.getSelection();
@@ -186,7 +187,6 @@ export default {
       }
       return null;
     },
-
     // 恢复光标位置
     restoreRange(savedRange) {
       if (!savedRange) return;
@@ -207,7 +207,6 @@ export default {
         this.focusAtEnd();
       }
     },
-
     // 光标移到末尾
     focusAtEnd() {
       const input = this.$refs.input;
@@ -225,7 +224,6 @@ export default {
 
       this.lastRange = range;
     },
-
     // 改进的saveRange方法
     saveRange() {
       const selection = window.getSelection();
@@ -238,7 +236,6 @@ export default {
         }
       }
     },
-
     // 处理粘贴事件
     handlePaste(e) {
       e.preventDefault();
@@ -248,7 +245,6 @@ export default {
 
       this.insertTextAtCursor(cleanText);
     },
-
     // 在光标位置插入文本
     insertTextAtCursor(text) {
       const selection = window.getSelection();
@@ -286,7 +282,6 @@ export default {
       this.lastRange = newRange;
       this.updateMessage();
     },
-
     // 改进的mention功能
     mentionMember(username) {
       const input = this.$refs.input;
@@ -335,7 +330,6 @@ export default {
       this.lastRange = newRange;
       this.updateMessage();
     },
-
     // 清空输入框
     clearInput() {
       const input = this.$refs.input;
@@ -346,17 +340,14 @@ export default {
         input.focus();
       }
     },
-
     // 处理中文输入法
     handleCompositionStart() {
       this.isComposing = true;
     },
-
     handleCompositionEnd() {
       this.isComposing = false;
       this.updateMessage();
     },
-
     // 发送消息改进
     sendMessageFn(e) {
       if (e.key === 'Enter') {
@@ -410,7 +401,6 @@ export default {
       this.cancelReplyMsgFn();
       this.scrollToBottom(true);
     },
-
     // 其他原有方法保持不变...
     sendMsgToBot(msg, sender) {
       const msg_data = msg.data.message;
@@ -427,7 +417,6 @@ export default {
         }
       });
     },
-
     async setGroupAdminFn() {
       const { value: mid } = await this.$prompt('请输入群成员id', '设置群管理员', {
         confirmButtonText: '确定',
@@ -439,7 +428,6 @@ export default {
       });
       console.log(res);
     },
-
     isSelfFn(sender) {
       if (sender === 'self') {
         return true;
@@ -449,13 +437,11 @@ export default {
         return sender === this.getCurrentUser.id;
       }
     },
-
     isRangeInNode(range, node) {
       if (!range || !node) return false;
       const container = range.commonAncestorContainer;
       return node.contains(container);
     },
-
     replyMsgFn(msg) {
       let name;
       if (this.chatTarget.isGroup) {
@@ -466,15 +452,12 @@ export default {
       this.replyMsg = { name, content: msg.content };
       this.$refs.input.focus();
     },
-
     handleMenuAction(action) {
       this.$emit('handleMenuAction', action);
     },
-
     cancelReplyMsgFn() {
       this.replyMsg = { name: null, content: null };
     },
-
     scrollToBottom(smooth = false) {
       const container = this.$refs.chatBox;
       if (!container) return;
@@ -489,7 +472,6 @@ export default {
         }
       });
     },
-
     // 更新占位符显示
     updatePlaceholder() {
       const input = this.$refs.input;
@@ -510,9 +492,7 @@ export default {
         this.clearInput();
       }
     },
-
     messagingEnabled(val) {
-      console.log('watch', val);
       if (!val) {
         this.clearInput();
       }
@@ -536,8 +516,6 @@ export default {
   },
 
   mounted() {
-    console.error('chat 禁言后艾特功能未禁用');
-
     const input = this.$refs.input;
     if (input) {
       input.focus();
@@ -580,11 +558,30 @@ export default {
   height: 100%;
 
   .k-chat-box {
+    position: relative;
     height: 100%;
     flex: 1;
     flex-basis: 0;
     overflow-y: auto;
     overflow-x: hidden;
+
+    .el-alert {
+      position: sticky;
+      top: 8px;
+      z-index: 9;
+      background: #f0e8fd;
+      color: var(--theme-color);
+      border: 1px solid var(--theme-color);
+
+      &::v-deep .el-alert__content {
+        span,
+        i,
+        p {
+          // color: #5d87ff;
+          color: var(--theme-color);
+        }
+      }
+    }
   }
 
   .k-chat-input-box {

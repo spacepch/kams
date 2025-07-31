@@ -6,6 +6,7 @@
       :updateChatTarget="updateChatTargetFn"
       :updateCollapseMsg="updateCollapseMsgFn"
       @switchMsg="switchMsgCallback"
+      @handleMenuAction="handleMenuAction"
     ></sb-left-aside>
     <k-container v-show="show.isShowChatBox" direction="vertical" class="k-sb-main">
       <!-- 聊天窗口页头 -->
@@ -33,7 +34,6 @@
       <k-container direction="horizontal" class="k-chat-main">
         <sb-chat-main
           ref="chatMainRef"
-          @showUserDetail="showUserDetailFn"
           :chatTarget="chatTarget"
           :memberList="getMemberList"
           @handleMenuAction="handleMenuAction"
@@ -164,7 +164,6 @@ export default {
     switchMsgCallback(params) {
       // console.log(params);
     },
-    showUserDetailFn(userInfo) {},
     handleMenuAction(action) {
       const { actionType, currentUser, targetUser, groupId } = action;
       const actionMap = {
@@ -177,7 +176,10 @@ export default {
         UNMUTE_USER: this.unmuteMember,
         REVOKE_ADMIN: this.revokeAdmin,
         SET_ADMIN: this.setAdmin,
-        MUTE_GROUP: this.handleMuteGroup
+        MUTE_GROUP: this.handleMuteGroup,
+        REMOVE_GROUP: this.removeGroup,
+        LEAVE_GROUP: this.leaveGroup,
+        INVITE_FRIEND: this.inviteFriend
       };
       if (actionMap[actionType]) {
         actionMap[actionType](targetUser, groupId, currentUser);
@@ -187,48 +189,141 @@ export default {
       this.$refs.leftAsideRef.showUserDetailFn(targetUser);
     },
     mentionUser(targetUser, groupId, currentUser) {
-      this.$refs.chatMainRef.mentionMember(targetUser.name);
+      if (this.messagingEnabled) this.$refs.chatMainRef.mentionMember(targetUser.name);
+      else this.$message.info('禁言中，请解禁后再试！');
     },
     addFriend(targetUser, groupId, currentUser) {
-      console.log('addFriend');
       const user = new User(this.getCurrentUser);
       const res = user.addFriend(targetUser.id);
-      if (res) this.$message.success('添加成功！');
-      else this.$message.error('添加失败！');
+      if (res) {
+        this.$message.success('添加成功！');
+        this.send({
+          event: 'on_friend_increase',
+          time: Date.now(),
+          type: 0,
+          userId: user.id
+        });
+      } else this.$message.error('添加失败！');
     },
     removeFriend(targetUser, groupId, currentUser) {
-      console.log('removeFriend');
       const user = new User(this.getCurrentUser);
-      user.removeFriendById(targetUser.id);
+      const res = user.removeFriendById(targetUser.id);
+      if (res) {
+        this.send({
+          event: 'on_friend_decrease',
+          time: Date.now(),
+          type: 0,
+          userId: user.id
+        });
+      }
+      console.log('re', res);
+    },
+    removeGroup(targetUser, groupId, currentUser) {
+      console.log('removeGroup');
+      const user = new User(targetUser);
+      const res = user.removeGroupById(groupId);
+      if (!res) {
+        this.$dialog({ title: '警告', content: '群聊删除失败！' });
+      }
+    },
+    leaveGroup(targetUser, groupId, currentUser) {
+      const user = new User(targetUser);
+      const res = user.leaveGroupById(groupId);
+      if (!res) {
+        this.$message.error('群聊退出失败！');
+      } else {
+        this.$message.success('已退出群聊！');
+        this.send({
+          event: 'on_group_decrease',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operatorId: targetUser.id,
+          groupId
+        });
+      }
+    },
+    inviteFriend(targetUser, groupId, currentUser) {
+      const curUser = new User(this.getCurrentUser);
+      const res = curUser.inviteUserToGroup({
+        groupId,
+        invitee: targetUser.id
+      });
+      if (res) {
+        this.send({
+          event: 'on_group_increase',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operatorId: curUser.id,
+          groupId
+        });
+      } else {
+        this.$message.error('邀请失败！');
+      }
     },
     muteMember(targetUser, groupId, currentUser) {
       console.log('muteMember', groupId, targetUser);
       const user = new User(this.getCurrentUser);
-      user.muteMemberById(groupId, targetUser.id);
+      const res = user.muteMemberById(groupId, targetUser.id);
+      if (res) {
+        this.send({
+          event: 'on_group_ban',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operatorId: user.id,
+          groupId,
+          duration: 5
+        });
+      }
     },
     unmuteMember(targetUser, groupId, currentUser) {
       const user = new User(this.getCurrentUser);
       const res = user.unmuteMemberById(groupId, targetUser.id);
       if (res) {
-        console.log('unmuteMember success');
-      } else {
-        console.log('unmuteMember fail');
+        this.send({
+          event: 'on_group_ban',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operatorId: user.id,
+          groupId,
+          duration: 0
+        });
       }
     },
     handleMuteGroup(action, groupId, status) {
       const isMute = action ? action.enable : status;
       const user = new User(this.getCurrentUser);
-      const res = user.handleMuteGroupById(this.chatTarget.id, isMute);
-      console.log(res);
+      const res = user.handleMuteGroupById(groupId, isMute);
+      if (res) {
+        this.send({
+          event: 'on_group_whole_ban',
+          type: 1,
+          operatorId: user.id,
+          operation: status ? 'set' : 'unset',
+          groupId,
+          time: Date.now()
+        });
+      }
     },
     kickMember(targetUser, groupId, currentUser) {
       console.log('kickMember');
       const user = new User(this.getCurrentUser);
       const res = user.kickMemberById({ groupId, expellee: targetUser.id });
       if (res) {
-        console.log('kickMember success');
+        this.$message.success('已移出群聊！');
+        this.send({
+          event: 'on_group_decrease',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operatorId: user.id,
+          groupId
+        });
       } else {
-        console.log('kickMember fail');
+        this.$message.error('移除失败！');
       }
     },
     setAdmin(targetUser, groupId, currentUser) {
@@ -237,12 +332,30 @@ export default {
         gid: groupId,
         mid: targetUser.id
       });
-      console.log(res);
+      if (res) {
+        this.send({
+          event: 'on_group_admin',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operation: 'set',
+          groupId
+        });
+      }
     },
     revokeAdmin(targetUser, groupId, currentUser) {
       console.log('revokeAdmin');
       const res = new User(this.getCurrentUser).revokeGroupAdmin(groupId, targetUser.id);
-      console.log(res);
+      if (res) {
+        this.send({
+          event: 'on_group_admin',
+          time: Date.now(),
+          type: 1,
+          userId: targetUser.id,
+          operation: 'unset',
+          groupId
+        });
+      }
     },
     receiveWsMsg(msg) {
       const actionsMap = {
@@ -285,6 +398,17 @@ export default {
     getGroupMemberLength() {
       return this.chatTarget.isGroup ? `（${this.getMemberList.length}）` : null;
     },
+    messagingEnabled() {
+      if (this.chatTarget.isGroup) {
+        const curMember = new User(this.getCurrentUser);
+        const isAdmin = curMember._isAdmin(this.chatTarget.id);
+        if (isAdmin) return true;
+        const isGroupMute = this.getCurrentMsg.isMute;
+        const isMute = this.getCurrentMsg.muteMembers.includes(curMember.id);
+        return !(isGroupMute || isMute);
+      }
+      return true;
+    },
     isShowRightMask() {
       return this.getIsNarrowScreen && this.show.isCollapseRight;
     },
@@ -302,6 +426,14 @@ export default {
         }
       },
       immediate: true
+    },
+    getCurrentMsg: {
+      handler(val) {
+        if (val === null) {
+          this.chatTarget = { id: '', isGroup: false };
+        }
+      },
+      deep: true
     }
   },
   created() {
@@ -339,6 +471,7 @@ export default {
     .k-chat-main {
       position: relative;
       flex-grow: 1;
+      min-width: 0;
 
       .mask {
         position: absolute;

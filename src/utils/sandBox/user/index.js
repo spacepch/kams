@@ -4,7 +4,6 @@ import { nanoid } from 'nanoid';
 
 const ROLE_SELF = 'self';
 const ROLE_FRIEND = 'friend';
-console.error('user: 用户头像功能待完善！');
 // 用户类
 /**
  * @description: 用户类
@@ -17,8 +16,12 @@ export default class User {
     this.numId = numId || this.self().numId;
     this.age = age || this.self().age;
     this.sex = sex || this.self().sex;
+
+    // 计算用户头像码
     this.order = this.self().order || store.state.sandBox.registeredUsersCount;
-    this.avatar = avatar || `https://picsum.photos/id/${this.order}/50/50`;
+    const avatar_code = this.order * 10 ** (this.order % 2) * 10;
+
+    this.avatar = avatar || `https://picsum.photos/id/${avatar_code}/50/50`;
     this.groups = this.self().groups || [];
     this.friends = this.self().friends || [];
   }
@@ -99,6 +102,7 @@ export default class User {
     const delRes1 = store.commit('sandBox/REMOVE_FRIEND', { fid, id: this.self().id });
     store.commit('sandBox/REMOVE_FRIEND', { fid: this.self().id, id: fid });
     console.log(delRes1);
+    return true;
   }
 
   /**
@@ -407,6 +411,7 @@ export default class User {
    */
   _isAdmin(gid, uid) {
     const group = store.getters['sandBox/getGroupById'](gid);
+    if (!group) return false;
     const id = uid || this.id;
     const isLord = group.lord === id || this.self().isSuper;
     const isAdmin = group.admins.some((ad) => ad === id) || isLord;

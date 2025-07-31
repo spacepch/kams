@@ -40,7 +40,7 @@ import { getVisibleMenuItems } from '@/utils/sandBox/permissionService';
 import Administrators from '@/utils/sandBox/administrators';
 import User from '@/utils/sandBox/user';
 import Group from '@/utils/sandBox/group';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 export default {
   name: 'k-sb-message',
   data() {
@@ -66,6 +66,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions('sandBox', ['send']),
     getUserAvatarFn(role) {
       if (role === 'self') {
         return this.getCurrentUser.avatar;
@@ -75,20 +76,45 @@ export default {
         return this.admin.getUserById(this.message.role).avatar;
       }
     },
+    deleteMsgFn(user) {
+      if (this.message.isGroup) {
+        // 群聊
+        const res = user.deleteGroupMessage({ id: this.chatTarget.id, msgId: this.message.id });
+        if (res) {
+          this.$message.success('删除成功');
+          this.send({
+            event: 'on_message_delete',
+            time: Date.now(),
+            type: 1,
+            userId: user.id,
+            messageId: this.message.id,
+            operatorId: user.id,
+            groupId: this.chatTarget.id
+          });
+        } else this.$message.error('删除失败！');
+      } else {
+        // 私聊
+        console.log(this.message.receiver, this.message.id);
+        const res = user.deleteFriendMessage(this.message.receiver, this.message.id);
+        if (res) {
+          this.$message.success('删除成功');
+          this.send({
+            event: 'on_message_delete',
+            time: Date.now(),
+            type: 0,
+            userId: user.id,
+            messageId: this.message.id
+          });
+        } else this.$message.error('删除失败！');
+      }
+    },
     testContextMenuFn({ task }) {
       const user = new User(this.getCurrentUser);
       if (task === 0) {
-        if (this.message.isGroup) {
-          const res = user.deleteGroupMessage({ id: this.chatTarget.id, msgId: this.message.id });
-          if (res) this.$message.success('删除成功');
-          else this.$message.error('删除失败！');
-        } else {
-          console.log(this.message.receiver, this.message.id);
-          const res = user.deleteFriendMessage(this.message.receiver, this.message.id);
-          if (res) this.$message.success('删除成功');
-          else this.$message.error('删除失败！');
-        }
+        // 撤回
+        this.deleteMsgFn(user);
       } else if (task === 1) {
+        // 回复
         this.$emit('replyMsg', this.message);
       }
     },
@@ -180,6 +206,8 @@ export default {
         }
         .nickname {
           font-size: 12px;
+          // color: #000;
+          font-weight: bold;
         }
         .date {
           font-size: 11px;
