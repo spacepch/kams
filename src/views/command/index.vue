@@ -56,7 +56,7 @@
           mode="column"
         >
           <k-menu-item
-            v-for="(menu, index) in menus"
+            v-for="(menu, index) in getCmds"
             :key="index"
             :index="menu.name"
             @click="selectCmdFn(menu)"
@@ -334,15 +334,16 @@ export default {
       this.config = d;
     }
   },
-  created() {
+  created() {},
+  mounted() {
     this.menus = this.getCmds;
+    console.log(this.getCmds);
     this.updateCurrentFn();
-  },
-  mounted() {}
+  }
 };
 </script>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .k-container {
   height: var(--el-card-height);
   margin-top: 10px;

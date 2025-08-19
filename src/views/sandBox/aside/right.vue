@@ -119,7 +119,6 @@ export default {
   methods: {
     getUserMenuItems(user) {
       const curUer = this.memberList.find(({ id }) => id === this.getCurrentUser.id);
-      // console.log(curUer, user);
       const group = new Group({ id: this.chatTarget.id });
       const menu = getVisibleMenuItems(curUer, user, group);
       return menu;
@@ -176,7 +175,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser']),
+    ...mapGetters('sandBox', ['getCurrentUser', 'getGroupMessage']),
     ...mapGetters('layoutOption', ['getIsNarrowScreen']),
     sortedMemberList() {
       // 角色优先级映射
@@ -200,7 +199,8 @@ export default {
       return this.memberList.length;
     },
     isMuteAll() {
-      return this.group.getAllMessage().isMute;
+      console.log(this.getGroupMessage(this.group.id));
+      return this.getGroupMessage(this.group.id).isMute;
     },
     muteBtnClass() {
       return this.isMuteAll ? 'el-icon-turn-off-microphone' : 'el-icon-microphone';
@@ -210,11 +210,15 @@ export default {
       return u._isAdmin(this.chatTarget.id);
     }
   },
+  watch: {},
   created() {
     this.group = new Group({ id: this.chatTarget.id });
   },
   mounted() {
     // console.log(this.sortedMemberList);
+
+    const isMute = this.getGroupMessage(this.group.id);
+    console.log('getters获取群消息', isMute);
   }
 };
 </script>

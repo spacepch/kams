@@ -10,7 +10,7 @@
   >
     <li
       class="k-menu-item"
-      :class="[{ className: className }, direction]"
+      :class="[{ className }, { active }, direction]"
       :style="[
         itemStyle,
         { height: `${height}px`, minHeight: `${height}px` },

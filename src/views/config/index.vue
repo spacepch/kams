@@ -69,7 +69,7 @@
         <pps-form @submit="submitBackendFn()" @reset="resetBackendFn()">
           <div class="k-list">
             <div>
-              <h3>后端IP设置</h3>
+              <h3>后端设置</h3>
               <p class="tip">警告！若无需分离前后端请谨慎修改！</p>
             </div>
             <div class="k-list-item">
@@ -98,11 +98,12 @@
             </div>
             <div class="k-list-item">
               <div class="k-list-main">
-                <span>沙盒测试端口号</span>
-                <pps-input
-                  :content.sync="hostForm.sandBoxPort"
-                  placeholder="后端端口号"
-                ></pps-input>
+                <span>沙盒ws是否长连</span>
+                <el-switch
+                  @change="setSandboxWsAliveFn"
+                  v-model="isKeepSandboxWsAlive"
+                  active-color="#00aeed"
+                ></el-switch>
               </div>
             </div>
             <div class="k-list-item">
@@ -133,6 +134,7 @@ import dp from '@/components/dropdown';
 export default {
   data() {
     return {
+      isKeepSandboxWsAlive: false,
       form: {
         'command-prefix': '',
         port: null,
@@ -172,6 +174,7 @@ export default {
 
   methods: {
     ...mapMutations('layoutOption', ['updateHost', 'updatePort', 'updateSandBoxPort']),
+    ...mapMutations('sandBox', ['SET_SANDBOX_WS_KEEPALIVE']),
     async getConfig() {
       const { data: res } = await getGlobalConfigAPI();
       this.form = { ...this.form, ...res };
@@ -243,10 +246,19 @@ export default {
         this.listWidth = 90;
         this.isPadding = 1;
       }
+    },
+    initSandboxWsAliveFn() {
+      this.isKeepSandboxWsAlive = this.store_keepSandboxWsAlive;
+    },
+    setSandboxWsAliveFn(status) {
+      this.SET_SANDBOX_WS_KEEPALIVE(status);
     }
   },
   computed: {
-    ...mapState('layoutOption', ['host', 'port', 'protocol', 'sandBoxPort'])
+    ...mapState('layoutOption', ['host', 'port', 'protocol', 'sandBoxPort']),
+    ...mapState('sandBox', {
+      store_keepSandboxWsAlive: 'isKeepSandboxWsAlive'
+    })
   },
   mounted() {
     this.http_or_https = this.protocol || 'https://';
@@ -254,6 +266,7 @@ export default {
   created() {
     this.getConfig();
     this.mountBackendConfigFn();
+    this.initSandboxWsAliveFn();
   }
 };
 </script>

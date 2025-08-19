@@ -65,13 +65,14 @@ export default {
       });
     }
   },
-  mounted() {
+  mounted() {},
+  created() {
+    this.$store.dispatch('command/getCommands');
+    this.$store.dispatch('modulesDetail/getData');
     this.isVersionLatest()
       .then(() => {
         this.handleAside();
         this.$ws.init();
-        this.$store.dispatch('command/getCommands');
-        this.$store.dispatch('modulesDetail/getData');
       })
       .catch(() => {});
   },
@@ -120,7 +121,7 @@ export default {
   height: 100%;
   max-width: 100vw;
 
-  .kams-main-container{
+  .kams-main-container {
     flex-basis: 0;
     flex: 1;
   }

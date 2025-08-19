@@ -14,7 +14,7 @@
 export default {
   name: 'App',
   mounted() {
-    // this.$dialog({ title: '注意', content: '版本更新后请清除localStorage数据！' })
+    console.error('更新kams的版本，添加版本不一致清空缓存');
   }
 };
 </script>

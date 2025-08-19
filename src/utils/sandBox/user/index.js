@@ -28,7 +28,7 @@ export default class User {
 
   /**
    * 挂载用户
-   * @returns 是否挂载成功
+   * @returns 用户对象
    */
   mount() {
     const hasUser = store.getters['sandBox/getUserById'](this.id);
@@ -79,6 +79,10 @@ export default class User {
     if (!friend || hasFriend || fid === this.id) return false;
     store.commit('sandBox/ADD_FRIEND', { fid, id: this.id });
     store.commit('sandBox/INIT_PRIVATE_MESSAGE', { id: this.id, fid });
+    this.sendMessageToFriend({
+      id: fid,
+      content: '我们已成功添加为好友，现在可以开始聊天啦～'
+    });
     this.receiveAddFriend(friend);
     return true;
   }

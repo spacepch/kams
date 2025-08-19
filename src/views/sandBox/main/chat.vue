@@ -568,7 +568,7 @@ export default {
     .el-alert {
       position: sticky;
       top: 8px;
-      z-index: 9;
+      z-index: 2;
       background: #f0e8fd;
       color: var(--theme-color);
       border: 1px solid var(--theme-color);

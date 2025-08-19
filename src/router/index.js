@@ -109,7 +109,8 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach((to, from) => {
-  document.title = `kams-${to.meta.title}` || 'kams';
+  const title = to.meta.title;
+  document.title = title ? `kams-${title}` : 'kams';
 });
 
 export default router;

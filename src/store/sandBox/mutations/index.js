@@ -253,5 +253,8 @@ export default {
   },
   SET_CONNECTION_STATUS(state, status) {
     state.wsStatus = status;
+  },
+  SET_SANDBOX_WS_KEEPALIVE(state, status) {
+    state.isKeepSandboxWsAlive = status;
   }
 };

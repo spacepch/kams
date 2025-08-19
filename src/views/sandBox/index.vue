@@ -31,6 +31,7 @@
           <i class="el-icon-more"></i>
         </gray-button>
       </header>
+      <!-- 聊天窗口 -->
       <k-container direction="horizontal" class="k-chat-main">
         <sb-chat-main
           ref="chatMainRef"
@@ -59,7 +60,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import Group from '@/utils/sandBox/group';
@@ -216,10 +217,8 @@ export default {
           userId: user.id
         });
       }
-      console.log('re', res);
     },
     removeGroup(targetUser, groupId, currentUser) {
-      console.log('removeGroup');
       const user = new User(targetUser);
       const res = user.removeGroupById(groupId);
       if (!res) {
@@ -262,8 +261,7 @@ export default {
         this.$message.error('邀请失败！');
       }
     },
-    muteMember(targetUser, groupId, currentUser) {
-      console.log('muteMember', groupId, targetUser);
+    muteMember(targetUser, groupId, duration) {
       const user = new User(this.getCurrentUser);
       const res = user.muteMemberById(groupId, targetUser.id);
       if (res) {
@@ -294,7 +292,8 @@ export default {
       }
     },
     handleMuteGroup(action, groupId, status) {
-      const isMute = action ? action.enable : status;
+      console.log(action, groupId, status);
+      const isMute = action ?? status;
       const user = new User(this.getCurrentUser);
       const res = user.handleMuteGroupById(groupId, isMute);
       if (res) {
@@ -309,7 +308,6 @@ export default {
       }
     },
     kickMember(targetUser, groupId, currentUser) {
-      console.log('kickMember');
       const user = new User(this.getCurrentUser);
       const res = user.kickMemberById({ groupId, expellee: targetUser.id });
       if (res) {
@@ -327,7 +325,6 @@ export default {
       }
     },
     setAdmin(targetUser, groupId, currentUser) {
-      console.log('setAdmin');
       const res = new User(this.getCurrentUser).setGroupAdmin({
         gid: groupId,
         mid: targetUser.id
@@ -344,7 +341,6 @@ export default {
       }
     },
     revokeAdmin(targetUser, groupId, currentUser) {
-      console.log('revokeAdmin');
       const res = new User(this.getCurrentUser).revokeGroupAdmin(groupId, targetUser.id);
       if (res) {
         this.send({
@@ -360,12 +356,15 @@ export default {
     receiveWsMsg(msg) {
       const actionsMap = {
         send_private_msg: this.botSendPrivateMsg,
-        send_group_msg: this.botSendGroupMsg,
-        set_group_whole_ban: this.handleMuteGroup
+        send_group_msg: this.botSendGroupMsg
       };
 
       if (actionsMap[msg.action]) {
         actionsMap[msg.action](msg);
+      } else if (msg.action === 'set_group_whole_ban') {
+        this.handleMuteGroup(msg.enable, msg.groupId);
+      } else if (msg.action === 'set_group_ban') {
+        this.muteMember(msg.userId, msg.groupId, msg.duration);
       }
     },
     botSendPrivateMsg(msg) {
@@ -383,11 +382,19 @@ export default {
         content: msg.message,
         replyMsg: null
       });
+    },
+
+    // 控制ws是否长链
+    initSandboxWsAliveFn() {
+      if (!this.isKeepSandboxWsAlive) {
+        this.close();
+      }
     }
   },
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getCurrentMsg']),
     ...mapGetters('layoutOption', ['getIsNarrowScreen']),
+    ...mapState('sandBox', ['isKeepSandboxWsAlive']),
     getMemberList() {
       if (this.chatTarget.isGroup && this.getCurrentMsg) {
         const group = this.admin.getGroupById(this.chatTarget.id);
@@ -439,18 +446,18 @@ export default {
   created() {
     this.$store.commit('sandBox/SWITCH_USER');
     this.$store.commit('sandBox/SWITCH_CHAT');
+
     // 初始化ws连接
     this.initWebSocket();
-
     wsBus.$on('onmessage', this.receiveWsMsg);
   },
   mounted() {
     // this.show.isCollapseRight = !this.getIsNarrowScreen;
+    console.error('[sandbox] 全体禁言方法、接受ws消息方法待完善');
   },
   beforeDestroy() {
-    console.log('beforeDestroy');
     wsBus.$off('onmessage', this.receiveWsMsg);
-    this.close();
+    this.initSandboxWsAliveFn();
   }
 };
 </script>

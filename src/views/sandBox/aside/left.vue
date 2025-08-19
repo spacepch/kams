@@ -132,9 +132,12 @@
             >
               <div class="list-item">
                 <pps-avatar :src="item.avatar" size="40" :title="item.name"></pps-avatar>
-                <div class="name" :title="item.name">{{ item.name }}</div>
-                <span class="closeBtn" @click="deleteFriendMsgFn(item)">
-                  <i class="el-icon-circle-close"></i>
+                <div class="name" :title="item.name">
+                  <span class="name-text">{{ item.name }}</span>
+                  <p class="name__message">{{ item.message }}</p>
+                </div>
+                <span class="closeBtn">
+                  {{ item.date }}
                 </span>
               </div>
             </k-menu-item>
@@ -200,10 +203,15 @@
     >
       <template v-slot:content>
         <pps-input
-          @change="searchFn('input')"
+          @change="searchFn()"
+          clearable
           :content.sync="searchDialog.input"
           :placeholder="`请输入${searchDialog.tabs[searchDialog.index]} ID`"
-        />
+        >
+          <span slot="prepend" style="padding: 0 8px">
+            {{ searchDialog.tabPrefix[searchDialog.index] }}-
+          </span>
+        </pps-input>
         <k-tab ref="k-tab" :tabs="searchDialog.tabs" @changeTab="switchSearchTabFn">
           <template v-slot:thumb>
             <div class="thumb"></div>
@@ -218,9 +226,9 @@
           <el-table-column align="center" prop="name" label="昵称"></el-table-column>
           <el-table-column align="center" prop="id" label="id"></el-table-column>
           <el-table-column align="center" label="操作">
-            <template slot-scope="scope">
-              <pps-button @click="addFriendFn(scope.row.id)" :disabled="isAdded">
-                {{ isAdded ? '已添加' : '添加' }}
+            <template slot-scope="{ row }">
+              <pps-button @click="addFriendFn(row.id)" :disabled="row.isAdded">
+                {{ row.isAdded ? '已添加' : '添加' }}
               </pps-button>
             </template>
           </el-table-column>
@@ -246,8 +254,8 @@
             >
               <el-table-column type="selection" align="center" label="选择"></el-table-column>
               <el-table-column align="center" label="头像">
-                <template slot-scope="scope">
-                  <img :src="scope.row.avatar" alt="" />
+                <template slot-scope="{ row }">
+                  <pps-avatar :src="row.avatar" size="30" :title="row.name"></pps-avatar>
                 </template>
               </el-table-column>
               <el-table-column prop="name" align="center" label="名称"></el-table-column>
@@ -354,7 +362,7 @@ import { mapGetters } from 'vuex';
 // import debounce from 'debounce';
 import kContainer from '@/components/layout/container';
 import kMenuItem from '@/components/menus/menu-item.vue';
-import kMenu from '@/components/menus/';
+import kMenu from '@/components/menus/index.vue';
 import kSbAside from '@/components/layout/aside';
 import kTab from './tab/tab.vue';
 import User from '@/utils/sandBox/user';
@@ -362,6 +370,7 @@ import Administrators from '@/utils/sandBox/administrators';
 import ADD_USER_IMG from '@/assets/addAvatar.svg';
 import REMOVE_USER from '@/assets/removeAvatar.svg';
 import grayButton from '../ui/grayButton.vue';
+import { formatTimestamp } from '@/utils/formatTimeStamp';
 export default {
   name: 'sb-left-aside',
   components: { kSbAside, kContainer, kMenu, kMenuItem, kTab, grayButton },
@@ -400,6 +409,7 @@ export default {
       removeUser: null,
       searchDialog: {
         tabs: ['用户', '群聊', '机器人'],
+        tabPrefix: ['user', 'group', 'user'],
         index: 0,
         input: ''
       },
@@ -513,47 +523,50 @@ export default {
     },
     switchSearchTabFn(tab) {
       this.searchDialog.index = tab;
-      if (this.searchDialog.input) {
-        this.searchFn();
-      }
+      this.searchFn();
     },
     searchFn() {
       this.tableData = [];
       const id = this.searchDialog.input;
+      if (!id) return;
+      const self = new User(this.getCurrentUser);
       const admin = new Administrators();
       switch (this.searchDialog.index) {
         case 0: {
-          const user = admin.getUserById(`user-${id}`);
-          if (user) {
-            const self = this.getCurrentUser;
-            const isAdded = self.friends.some((friend) => friend.id === user.id);
-            this.tableData.push({ ...user, isAdded });
-          }
+          const userListWithSuper = admin.getAllUser();
+          userListWithSuper.forEach((user) => {
+            if (user.isSuper) return;
+            if (user.numId.includes(id)) {
+              const isAdded = self.friends.some((friend) => friend.id === user.id);
+              this.tableData.push({ ...user, isAdded });
+            }
+          });
           break;
         }
         case 1: {
-          const group = admin.getGroupById(`group-${id}`);
-          if (group) {
-            const self = this.getCurrentUser;
-            const isAdded = self.groups.some((g) => g.id === group.id);
-            console.log(isAdded);
-            this.tableData.push({ ...group, isAdded });
-          }
+          const groupList = admin.getAllGroup();
+          groupList.forEach((group) => {
+            if (group.id.includes(id)) {
+              const isAdded = self.groups.some((g) => g.id === group.id);
+              this.tableData.push({ ...group, isAdded });
+            }
+          });
           break;
         }
         case 2: {
-          const user = admin.getUserById(`user-${id}`);
-          if (user && user.isSuper) {
-            const self = this.getCurrentUser;
-            const isAdded = self.friends.some((f) => f.id === user.id);
-            this.tableData.push({ ...user, isAdded });
-          }
+          const userList = admin.getAllUser();
+          userList.forEach((user) => {
+            if (!user.isSuper) return;
+            if (user.numId.includes(id)) {
+              const isAdded = self.friends.some((f) => f.id === user.id);
+              this.tableData.push({ ...user, isAdded });
+            }
+          });
           break;
         }
       }
     },
     closeAddObjDialogFn() {
-      console.log('closeAddObjDialogFn');
       this.tableData = [];
       this.searchDialog.input = '';
     },
@@ -624,6 +637,10 @@ export default {
       this.$emit('switchMsg', chat);
       this.collapseMsghandler(!this.getIsNarrowScreen);
     },
+    selectNewMsgFn(msg) {
+      console.log(msg);
+      return 'test';
+    },
     showUserDetailFn(userInfo) {
       Object.assign(this.userDetailDate, userInfo);
       this.show.userInfo = true;
@@ -643,26 +660,40 @@ export default {
   computed: {
     ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
     ...mapGetters('layoutOption', ['getIsNarrowScreen']),
-    isAdded() {
-      const curUser = this.getCurrentUser;
-      const type = this.searchDialog.index;
-      const target = this.searchDialog.input;
-      let isAdded;
-      if (type === 0) {
-        if (this.getCurrentUser.id === `user-${target}`) return (isAdded = true);
-        isAdded = curUser.friends.some((friend) => friend.id === `user-${target}`);
-      } else if (type === 1) {
-        isAdded = curUser.groups.some((group) => group.id === `group-${target}`);
-      }
-      return isAdded;
-    },
     showMessageList() {
       const user = new User(this.getCurrentUser);
+      let chatList = [];
       if (this.messageMode) {
-        return user.getAllGroups();
+        chatList = user.groups.map(({ id }) => {
+          let message, date;
+          const group = user.getGroupById(id);
+          const lastMessage = user.getGroupMessageById(id).messages.at(-1);
+          if (lastMessage === undefined) {
+            message = '\u00A0';
+            date = '';
+          } else {
+            const sender = this.admin.getUserById(lastMessage.role);
+            message = `${sender.name}: ${lastMessage.content}`;
+            date = formatTimestamp(lastMessage.date);
+          }
+          return { ...group, message, date };
+        });
       } else {
-        return user.getAllFriend();
+        // 获取好友列表和最新信息
+        chatList = user.friends.map((friend) => {
+          let message, date;
+          const lastMessage = user.getFriendMessageById(friend.id).at(-1);
+          if (lastMessage === undefined) {
+            message = '\u00A0';
+            date = '';
+          } else {
+            message = lastMessage.content;
+            date = formatTimestamp(lastMessage.date);
+          }
+          return { ...friend, message, date };
+        });
       }
+      return chatList;
     },
     getFriendListExceptSuper() {
       const targetUser = this.admin.getUserById(this.userDetailDate.id);
@@ -828,6 +859,7 @@ export default {
   }
   .aside-list {
     flex-grow: 1;
+    max-width: 241px;
     background-color: #fff;
     border-bottom: 2px solid #e9e9e9;
     border-right: 2px solid #e9e9e9;
@@ -866,16 +898,29 @@ export default {
           padding: 0 10px;
           .name {
             margin-inline-start: 10px;
+            flex: 1;
+            min-width: 0;
+            .name__message {
+              font-size: 12px;
+              color: var(--sb-reply-color);
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
           }
           .closeBtn {
-            display: none;
             margin-left: auto;
+            font-size: 12px;
+            color: var(--sb-reply-color);
           }
         }
-        &:hover {
-          .closeBtn {
-            display: block;
-          }
+      }
+      .k-menu-item.active {
+        .name__message {
+          color: #fff !important;
+        }
+        .closeBtn {
+          color: #fff !important;
         }
       }
     }
