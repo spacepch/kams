@@ -159,6 +159,7 @@
       :show.sync="show.createUser"
       @canceled="cancelCreateUserFn"
       @confirmed="createUserFn"
+      class="create-user-dialog"
       title="创建用户"
     >
       <template v-slot:content>
@@ -182,6 +183,14 @@
           <!-- <div class="user-input-label">头像</div> -->
           <pps-input label="头像" :content.sync="createUser.avatar" placeholder="请输入https地址" />
         </pps-form>
+        <hr />
+        <div class="quick-wrapper">
+          <span class="quick__text">快速创建10个用户</span>
+          <pps-button class="quick__btn" theme="confirm" @click="bulkCreateUsers()">
+            <i class="el-icon-plus"></i>
+            快速创建
+          </pps-button>
+        </div>
       </template>
     </pps-dialog>
 
@@ -655,6 +664,23 @@ export default {
     showGroupListFn(user) {
       this.userDetailDate = user;
       this.show.groupList = true;
+    },
+    bulkCreateUsers() {
+      const userList = [
+        { numId: '1', name: 'u1', age: 18, sex: '男' },
+        { numId: '2', name: 'u2', age: 18, sex: '男' },
+        { numId: '3', name: 'u3', age: 18, sex: '男' },
+        { numId: '4', name: 'u4', age: 20, sex: '女' },
+        { numId: '5', name: 'u5', age: 18, sex: '女' },
+        { numId: '6', name: 'u6', age: 18, sex: '女' },
+        { numId: '7', name: 'u7', age: 18, sex: '女' },
+        { numId: '8', name: 'u8', age: 18, sex: '女' }
+      ];
+
+      userList.forEach((user) => {
+        const u = new User(user).mount();
+        console.log(u);
+      });
     }
   },
   computed: {
@@ -925,19 +951,35 @@ export default {
       }
     }
   }
-  .pps-form {
-    box-sizing: border-box;
-    .user-sex-wrapper {
-      display: flex;
-      align-items: center;
-      height: 38px;
-      line-height: 38px;
-      margin: 20px 0;
+  .create-user-dialog {
+    .pps-form {
+      box-sizing: border-box;
+      .user-sex-wrapper {
+        display: flex;
+        align-items: center;
+        height: 38px;
+        line-height: 38px;
+        margin: 20px 0;
 
-      .sex-text-label {
-        width: 4rem;
-        text-align: right;
-        margin-right: 15px;
+        .sex-text-label {
+          width: 4rem;
+          text-align: right;
+          margin-right: 15px;
+        }
+      }
+    }
+    .quick-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: #f5f7fa;
+      border-radius: 8px;
+      .quick__btn {
+        border-radius: 6px;
+        padding: 6px 12px;
+
+        i{ margin-right: 2px;}
       }
     }
   }
