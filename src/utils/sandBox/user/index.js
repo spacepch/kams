@@ -309,7 +309,7 @@ export default class User {
    * @param {*} gid 群组id
    * @param {*} mid 成员id
    */
-  muteMemberById(gid, mid) {
+  muteMemberById(gid, mid, duration) {
     if (!this._isAdmin(gid)) return false;
     store.commit('sandBox/MUTE_MEMBER', { gid, mid });
     return true;

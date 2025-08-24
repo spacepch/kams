@@ -1,222 +1,162 @@
 <template>
-  <div class="editor-wrapper">
-    <div
-    v-if="0"
-      class="editor"
-      ref="editor"
-      contenteditable="true"
-      @input="onInput"
-      @keydown="onKeydown"
-      @click="onClick"
-    ></div>
+  <div class="create-user-modal">
+    <h3 class="modal-title">创建用户</h3>
+    <div class="form-group">
+      <label>昵称:</label>
+      <input type="text" placeholder="请输入昵称" />
+    </div>
+    <div class="form-group">
+      <label>账号:</label>
+      <input type="text" placeholder="请输入账号" />
+    </div>
+    <div class="form-group">
+      <label>年龄:</label>
+      <input type="number" placeholder="请输入年龄" />
+    </div>
+    <div class="form-group gender">
+      <label>性别:</label>
+      <label>
+        <input type="radio" name="gender" value="男" checked />
+        男
+      </label>
+      <label>
+        <input type="radio" name="gender" value="女" />
+        女
+      </label>
+    </div>
+    <div class="form-group">
+      <label>头像:</label>
+      <input type="text" placeholder="请输入 https 地址" />
+    </div>
 
-    <!-- 用户下拉提示框 -->
-    <ul v-if="showUserList" class="user-list" :style="listStyle">
-      <li
-        v-for="(user, index) in filteredUsers"
-        :key="user.id"
-        :class="{ active: index === activeIndex }"
-        @mousedown.prevent="selectUser(user)"
-      >
-        {{ user.name }}
-      </li>
-    </ul>
-    <div class="test">
-      <pps-context-menu
-        :menus="contextMenus"
-        trigger="contextmenu"
-        @select="handleMenuSelect"
-        @open="handleMenuOpen"
-        @close="handleMenuClose"
-      >
-        <template #content>
-          <div style=" border: 1px solid #ccc">
-            右键点击此区域显示菜单
-          </div>
-        </template>
-      </pps-context-menu>
+    <!-- 快速创建 -->
+    <div class="quick-create">
+      <span>快速创建10个用户</span>
+      <button class="quick-btn">
+        <i class="icon">⚡</i>
+        快速创建
+      </button>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="modal-footer">
+      <button class="cancel-btn">取消</button>
+      <button class="confirm-btn">确认</button>
     </div>
   </div>
 </template>
+
 <script>
-import contextm from './contextMenu.vue';
-export default {
-  data() {
-    return {
-      showUserList: false,
-      users: [
-        { id: 1, name: '张三' },
-        { id: 2, name: '李四' },
-        { id: 3, name: '王五' }
-      ],
-      filteredUsers: [],
-      activeIndex: 0,
-      mentionQuery: '',
-      listStyle: {
-        top: '0px',
-        left: '0px'
-      },
-      lastRange: null,
-      contextMenus: [
-        { label: '新建', icon: 'fas fa-plus' },
-        { label: '复制', icon: 'fas fa-copy', shortcut: 'Ctrl+C' },
-        { label: '粘贴', icon: 'fas fa-paste', disabled: true },
-        { divider: true },
-        { label: '删除', icon: 'fas fa-trash' }
-      ]
-    };
-  },
-  components: {
-    ppsContextMenu: contextm
-  },
-  methods: {
-    handleMenuSelect(item, index) {
-      console.log('选中菜单项：', item, '索引：', index);
-    },
-    handleMenuOpen() {
-      console.log('菜单打开');
-    },
-    handleMenuClose() {
-      console.log('菜单关闭');
-    },
-
-    onInput() {
-      const selection = window.getSelection();
-      this.lastRange = selection.getRangeAt(0).cloneRange();
-
-      const text = this.getTextBeforeCursor();
-      const atIndex = text.lastIndexOf('@');
-      if (atIndex !== -1) {
-        this.mentionQuery = text.slice(atIndex + 1);
-        this.filteredUsers = this.users.filter((user) => user.name.includes(this.mentionQuery));
-        if (this.filteredUsers.length > 0) {
-          this.showUserList = true;
-          this.activeIndex = 0;
-          this.updateListPosition();
-        } else {
-          this.showUserList = false;
-        }
-      } else {
-        this.showUserList = false;
-      }
-    },
-
-    onKeydown(e) {
-      if (!this.showUserList) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        this.activeIndex = (this.activeIndex + 1) % this.filteredUsers.length;
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        this.activeIndex =
-          (this.activeIndex - 1 + this.filteredUsers.length) % this.filteredUsers.length;
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        this.selectUser(this.filteredUsers[this.activeIndex]);
-      } else if (e.key === 'Escape') {
-        this.showUserList = false;
-      }
-    },
-
-    onClick() {
-      this.showUserList = false;
-    },
-
-    selectUser(user) {
-      const range = this.lastRange;
-      if (!range) return;
-
-      // 删除@关键词
-      const text = this.getTextBeforeCursor();
-      const atIndex = text.lastIndexOf('@');
-      range.setStart(range.endContainer, atIndex);
-      range.deleteContents();
-
-      // 插入 span 标签作为 mention
-      const mentionNode = document.createElement('span');
-      mentionNode.textContent = `@${user.name}`;
-      mentionNode.contentEditable = 'false';
-      mentionNode.className = 'mention-tag';
-
-      range.insertNode(mentionNode);
-
-      // 添加空格并设置光标
-      const space = document.createTextNode('\u00A0');
-      mentionNode.parentNode.insertBefore(space, mentionNode.nextSibling);
-
-      // 设置光标位置
-      range.setStartAfter(space);
-      range.setEndAfter(space);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-
-      this.showUserList = false;
-    },
-
-    getTextBeforeCursor() {
-      const sel = window.getSelection();
-      if (!sel.rangeCount) return '';
-      const range = sel.getRangeAt(0);
-      const preRange = range.cloneRange();
-      preRange.selectNodeContents(this.$refs.editor);
-      preRange.setEnd(range.endContainer, range.endOffset);
-      return preRange.toString();
-    },
-
-    updateListPosition() {
-      this.$nextTick(() => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount) return;
-        const range = sel.getRangeAt(0).cloneRange();
-        const rect = range.getBoundingClientRect();
-        this.listStyle.top = rect.bottom + window.scrollY + 'px';
-        this.listStyle.left = rect.left + window.scrollX + 'px';
-      });
-    }
-  }
-};
+export default {};
 </script>
-<style scoped>
-.editor-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.test {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-}
-.editor {
-  border: 1px solid #ccc;
-  padding: 10px;
-  min-height: 100px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.mention-tag {
-  background: #e6f3ff;
-  color: #0077cc;
-  padding: 0 4px;
-  border-radius: 3px;
-}
-.user-list {
-  position: absolute;
+
+<style>
+.create-user-modal {
+  width: 360px;
+  padding: 20px;
   background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: 'Microsoft YaHei', sans-serif;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  width: 70px;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input[type='text'],
+.form-group input[type='number'] {
+  flex: 1;
+  padding: 8px 10px;
   border: 1px solid #ccc;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  width: 200px;
-  z-index: 999;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s;
 }
-.user-list li {
-  padding: 6px 10px;
+
+.form-group input:focus {
+  border-color: #409eff;
+  box-shadow: 0 0 4px rgba(64, 158, 255, 0.4);
+}
+
+.gender label {
+  margin-right: 10px;
+}
+
+.quick-create {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f7fa;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin: 12px 0 16px;
+}
+
+.quick-btn {
+  background: #409eff;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s;
 }
-.user-list li.active {
-  background-color: #eee;
+
+.quick-btn:hover {
+  background: #66b1ff;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn,
+.confirm-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.cancel-btn {
+  background: #f2f3f5;
+  color: #606266;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.confirm-btn {
+  background: #409eff;
+  color: #fff;
+}
+
+.confirm-btn:hover {
+  background: #66b1ff;
 }
 </style>

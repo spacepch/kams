@@ -4,6 +4,7 @@ import axios from 'axios';
 // import store from '@/store/index';
 // import config from '@/config';
 
+console.error('[request] 跳转登录页面待优化');
 let myAxios;
 
 export const configureAxiosInstance = (store) => {

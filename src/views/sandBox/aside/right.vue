@@ -199,7 +199,6 @@ export default {
       return this.memberList.length;
     },
     isMuteAll() {
-      console.log(this.getGroupMessage(this.group.id));
       return this.getGroupMessage(this.group.id).isMute;
     },
     muteBtnClass() {
@@ -216,9 +215,6 @@ export default {
   },
   mounted() {
     // console.log(this.sortedMemberList);
-
-    const isMute = this.getGroupMessage(this.group.id);
-    console.log('getters获取群消息', isMute);
   }
 };
 </script>

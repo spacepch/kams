@@ -46,6 +46,7 @@
           >
             发送
           </pps-button>
+          <pps-button @click="ttt()">btn</pps-button>
         </div>
       </div>
     </template>
@@ -55,7 +56,7 @@
 
 <script>
 import LOGO from '@/assets/favicon-gray.svg';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapMutations } from 'vuex';
 import User from '@/utils/sandBox/user';
 import Administrators from '@/utils/sandBox/administrators';
 import kSbMessage from './message.vue';
@@ -84,7 +85,14 @@ export default {
         const isAdmin = curMember._isAdmin(this.chatTarget.id);
         if (isAdmin) return true;
         const isGroupMute = this.getCurrentMsg.isMute;
-        const isMute = this.getCurrentMsg.muteMembers.includes(curMember.id);
+        const isMute = this.getCurrentMsg.muteMembers.forEach((member) => {
+          if (member.id === curMember.id) {
+            const nowTimestamp = Date.now();
+            if (member.expire_time === null) return true;
+
+            if (nowTimestamp < member.expire_time) return true;
+          } else return false;
+        });
         return !(isGroupMute || isMute);
       }
       return true;
@@ -110,6 +118,10 @@ export default {
 
   methods: {
     ...mapActions('sandBox', ['send']),
+    ...mapMutations('sandBox', { handleMute: 'HANLE_MUTE' }),
+    ttt() {
+      this.handleMute();
+    },
 
     // 改进的输入处理方法
     inputFn(e) {
@@ -511,10 +523,10 @@ export default {
       default() {
         return [];
       }
-    },
-    ws: {}
+    }
   },
 
+  created() {},
   mounted() {
     const input = this.$refs.input;
     if (input) {

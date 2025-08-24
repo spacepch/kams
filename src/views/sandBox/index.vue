@@ -263,18 +263,17 @@ export default {
     },
     muteMember(targetUser, groupId, duration) {
       const user = new User(this.getCurrentUser);
-      const res = user.muteMemberById(groupId, targetUser.id);
+      const res = user.muteMemberById(groupId, targetUser.id, duration);
       if (res) {
         this.send({
           event: 'on_group_ban',
-          time: Date.now(),
-          type: 1,
           userId: targetUser.id,
           operatorId: user.id,
           groupId,
-          duration: 5
+          duration
         });
       }
+      // console.log('mute', targetUser, groupId, duration);
     },
     unmuteMember(targetUser, groupId, currentUser) {
       const user = new User(this.getCurrentUser);
@@ -356,7 +355,8 @@ export default {
     receiveWsMsg(msg) {
       const actionsMap = {
         send_private_msg: this.botSendPrivateMsg,
-        send_group_msg: this.botSendGroupMsg
+        send_group_msg: this.botSendGroupMsg,
+        on_data_error: this.t
       };
 
       if (actionsMap[msg.action]) {
@@ -364,8 +364,14 @@ export default {
       } else if (msg.action === 'set_group_whole_ban') {
         this.handleMuteGroup(msg.enable, msg.groupId);
       } else if (msg.action === 'set_group_ban') {
-        this.muteMember(msg.userId, msg.groupId, msg.duration);
+        console.log(msg.userId);
+        const user = new User({ id: msg.userId });
+        this.muteMember(user, msg.groupId, msg.time);
       }
+    },
+    t(d) {
+      // const t = JSON.parse(d.error);
+      // console.log(t);
     },
     botSendPrivateMsg(msg) {
       const user = new User({ numId: 'super-admin' });
@@ -453,7 +459,8 @@ export default {
   },
   mounted() {
     // this.show.isCollapseRight = !this.getIsNarrowScreen;
-    console.error('[sandbox] 全体禁言方法、接受ws消息方法待完善');
+    console.error('[sandbox] 禁言单成员待完成');
+    console.error('[sandbox] 创建群聊提那家成员初始化、更新muteMember待完善')
   },
   beforeDestroy() {
     wsBus.$off('onmessage', this.receiveWsMsg);

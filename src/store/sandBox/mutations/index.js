@@ -105,12 +105,14 @@ export default {
   ADD_MEMBER(state, { gid, uid, role }) {
     const group = state.groups.find((group) => group.id === gid);
     const member = state.users.find((user) => user.id === uid);
+    const groupMsgMuteList = state.groupMsg[gid].muteMembers;
     if (!group || !member) {
       console.error('群组不存在或用户不存在', gid, uid);
       return false;
     }
     group.members.push({ id: uid, role });
     member.groups.push({ id: gid, role });
+    groupMsgMuteList.push({ id: member.id, expire_time: null });
   },
   REMOVE_MEMBER(state, { gid, mid }) {
     // 检查群组和成员是否存在
@@ -134,6 +136,11 @@ export default {
     const memberIndex = group.members.findIndex((m) => m.id === mid);
     if (memberIndex === -1) return console.error('群组成员不存在', mid);
     group.members.splice(memberIndex, 1);
+
+    // 移除群组消息中禁言列表中的用户
+    const groupMsgMuteList = state.groupMsg[gid].muteMembers;
+    const muteIndex = groupMsgMuteList.findIndex((mute) => mute.id === mid);
+    if (muteIndex > -1) groupMsgMuteList.splice(muteIndex, 1);
 
     // 如果当前群组是被删群组，则清空当前消息
     const currentUser = state.currentUser;
@@ -198,15 +205,19 @@ export default {
   HANDLE_MUTE_GROUP(state, { gid, isMute }) {
     state.groupMsg[gid].isMute = isMute;
   },
-  MUTE_MEMBER(state, { gid, mid }) {
+  MUTE_MEMBER(state, { gid, mid, duration }) {
     const groupMsg = state.groupMsg[gid];
-    if (groupMsg && !groupMsg.muteMembers.includes(mid)) groupMsg.muteMembers.push(mid);
+    const member_mute = groupMsg.muteMembers.findIndex((item) => item.id === mid);
+    console.log(member_mute);
+    // if (groupMsg && !groupMsg.muteMembers.includes(mid)) {
+    //   groupMsg.muteMembers.push(mid);
+    // }
   },
   UNMUTE_MEMBER(state, { gid, mid }) {
     const groupMsg = state.groupMsg[gid];
     if (groupMsg && groupMsg.muteMembers.includes(mid)) {
       const index = groupMsg.muteMembers.findIndex((id) => id !== mid);
-      groupMsg.muteMembers.splice(index, 1);
+      if (index > -1) groupMsg.muteMembers.splice(index, 1);
     }
   },
   CLEAR_USER_MESSAGE(state, id) {
@@ -256,5 +267,19 @@ export default {
   },
   SET_SANDBOX_WS_KEEPALIVE(state, status) {
     state.isKeepSandboxWsAlive = status;
+  },
+
+  // 禁言
+  HANLE_MUTE(state, status) {
+    const groupList = state.groupMsg;
+    Object.keys(groupList).forEach((key) => {
+      groupList[key].muteMembers = [];
+      const muteMembers = groupList[key].muteMembers;
+      const group = state.groups.find((item) => item.id === key);
+      group.members.forEach((member) => {
+        const m = { id: member.id, expire_time: null };
+        muteMembers.push(m);
+      });
+    });
   }
 };

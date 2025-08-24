@@ -1,4 +1,4 @@
-// import Vue from 'vue';
+import Vue from 'vue';
 import wsBus from '@/utils/sandBox/wsBus';
 import { Notification } from 'element-ui';
 const WS_STRING = 'webSocket';
@@ -56,9 +56,17 @@ export default {
       }
     };
   },
-  send({ state }, payload) {
+  send(store, payload) {
+    const { state, dispatch } = store;
     if (state.wsStatus !== 'connected') {
-      console.error('WebSocket 未连接');
+      Vue.prototype
+        .$dialog({ title: '提示', content: 'SandBox webSocket已断开连接，是否重新连接？' })
+        .then(() => {
+          dispatch('initWebSocket');
+        })
+        .catch(() => {
+          Vue.prototype.$message.warn('取消重新连接');
+        });
       return;
     }
 
@@ -66,5 +74,16 @@ export default {
   },
   close({ state }) {
     state.wsInstance.close();
+  },
+
+  // 禁言检测
+  checkMute({ state, dispatch }) {
+    if (state.wsStatus !== 'connected') {
+      dispatch('initWebSocket');
+    }
+
+    dispatch('send', {
+      type: 'checkMute'
+    });
   }
 };

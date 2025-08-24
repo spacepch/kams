@@ -44,7 +44,7 @@ export default class Group {
   }
 
   removeMember(id) {
-    this.members = this.members.filter((member) => member.id !== id);
+    store.commit('sandBox/REMOVE_MEMBER', { gid: this.id, uid: id });
   }
 
   self() {
