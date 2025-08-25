@@ -262,6 +262,7 @@ export default {
       }
     },
     muteMember(targetUser, groupId, duration) {
+      if (duration === 0) return this.unmuteMember(targetUser, groupId);
       const user = new User(this.getCurrentUser);
       const res = user.muteMemberById(groupId, targetUser.id, duration);
       if (res) {
@@ -272,8 +273,9 @@ export default {
           groupId,
           duration
         });
+      } else {
+        this.botSendGroupMsg({ groupId, message: '管理员无法禁言！' });
       }
-      // console.log('mute', targetUser, groupId, duration);
     },
     unmuteMember(targetUser, groupId, currentUser) {
       const user = new User(this.getCurrentUser);
@@ -281,8 +283,6 @@ export default {
       if (res) {
         this.send({
           event: 'on_group_ban',
-          time: Date.now(),
-          type: 1,
           userId: targetUser.id,
           operatorId: user.id,
           groupId,
@@ -459,8 +459,6 @@ export default {
   },
   mounted() {
     // this.show.isCollapseRight = !this.getIsNarrowScreen;
-    console.error('[sandbox] 禁言单成员待完成');
-    console.error('[sandbox] 创建群聊提那家成员初始化、更新muteMember待完善')
   },
   beforeDestroy() {
     wsBus.$off('onmessage', this.receiveWsMsg);

@@ -311,7 +311,8 @@ export default class User {
    */
   muteMemberById(gid, mid, duration) {
     if (!this._isAdmin(gid)) return false;
-    store.commit('sandBox/MUTE_MEMBER', { gid, mid });
+    if (this._isAdmin(gid, mid)) return false;
+    store.commit('sandBox/MUTE_MEMBER', { gid, mid, duration });
     return true;
   }
 

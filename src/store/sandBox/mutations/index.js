@@ -206,19 +206,18 @@ export default {
     state.groupMsg[gid].isMute = isMute;
   },
   MUTE_MEMBER(state, { gid, mid, duration }) {
+    const timestamp_now = Date.now();
     const groupMsg = state.groupMsg[gid];
-    const member_mute = groupMsg.muteMembers.findIndex((item) => item.id === mid);
-    console.log(member_mute);
-    // if (groupMsg && !groupMsg.muteMembers.includes(mid)) {
-    //   groupMsg.muteMembers.push(mid);
-    // }
+    const mute_member = groupMsg.muteMembers.find((item) => item.id === mid);
+    if (!mute_member) return false;
+    const timestamp_expire = timestamp_now + duration * 1000;
+    mute_member.expire_time = timestamp_expire;
   },
   UNMUTE_MEMBER(state, { gid, mid }) {
     const groupMsg = state.groupMsg[gid];
-    if (groupMsg && groupMsg.muteMembers.includes(mid)) {
-      const index = groupMsg.muteMembers.findIndex((id) => id !== mid);
-      if (index > -1) groupMsg.muteMembers.splice(index, 1);
-    }
+    const mute_member = groupMsg.muteMembers.find((item) => item.id === mid);
+    if (!mute_member) return false;
+    mute_member.expire_time = null;
   },
   CLEAR_USER_MESSAGE(state, id) {
     if (id) {

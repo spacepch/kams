@@ -46,7 +46,7 @@
           >
             发送
           </pps-button>
-          <pps-button @click="ttt()">btn</pps-button>
+          <pps-button @click="ttt()">{{ data[0].content }}</pps-button>
         </div>
       </div>
     </template>
@@ -66,6 +66,7 @@ export default {
   components: { kSbMessage },
   data() {
     return {
+      data: [{ id: '1', content: '欢迎来到聊天室' }],
       LOGO,
       message: '',
       lastRange: null,
@@ -120,7 +121,8 @@ export default {
     ...mapActions('sandBox', ['send']),
     ...mapMutations('sandBox', { handleMute: 'HANLE_MUTE' }),
     ttt() {
-      this.handleMute();
+      // this.handleMute();
+      this.data[0].content = '已关闭';
     },
 
     // 改进的输入处理方法
