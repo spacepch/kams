@@ -46,7 +46,6 @@
           >
             发送
           </pps-button>
-          <pps-button @click="ttt()">{{ data[0].content }}</pps-button>
         </div>
       </div>
     </template>
@@ -66,7 +65,7 @@ export default {
   components: { kSbMessage },
   data() {
     return {
-      data: [{ id: '1', content: '欢迎来到聊天室' }],
+      muteStatusIntervalId: null,
       LOGO,
       message: '',
       lastRange: null,
@@ -79,21 +78,20 @@ export default {
   },
 
   computed: {
-    ...mapGetters('sandBox', ['getCurrentUser', 'getAllUser', 'getCurrentMsg']),
+    ...mapGetters('sandBox', [
+      'getCurrentUser',
+      'getAllUser',
+      'getCurrentMsg',
+      'getMemberMuteStatue'
+    ]),
     messagingEnabled() {
       if (this.chatTarget.isGroup) {
         const curMember = new User(this.getCurrentUser);
         const isAdmin = curMember._isAdmin(this.chatTarget.id);
         if (isAdmin) return true;
         const isGroupMute = this.getCurrentMsg.isMute;
-        const isMute = this.getCurrentMsg.muteMembers.forEach((member) => {
-          if (member.id === curMember.id) {
-            const nowTimestamp = Date.now();
-            if (member.expire_time === null) return true;
-
-            if (nowTimestamp < member.expire_time) return true;
-          } else return false;
-        });
+        const isMute = this.getMemberMuteStatue(this.chatTarget.id, curMember.id);
+        if (isMute) this.checkMuteStatus();
         return !(isGroupMute || isMute);
       }
       return true;
@@ -118,14 +116,21 @@ export default {
   },
 
   methods: {
-    ...mapActions('sandBox', ['send']),
-    ...mapMutations('sandBox', { handleMute: 'HANLE_MUTE' }),
-    ttt() {
-      // this.handleMute();
-      this.data[0].content = '已关闭';
+    ...mapActions('sandBox', ['send', 'updateMemberMuteStatue']),
+    ...mapMutations('sandBox', { clearMuteExpire: 'UNMUTE_MEMBER' }),
+    // 轮询群成员禁言状态
+    checkMuteStatus() {
+      const gid = this.getCurrentMsg.id;
+      const mid = this.getCurrentUser.id;
+      this.muteStatusIntervalId = setInterval(() => {
+        const isMute = this.getMemberMuteStatue(gid, mid);
+        if (!isMute) {
+          this.clearMuteExpire({ gid, mid });
+          clearInterval(this.muteStatusIntervalId);
+        }
+      }, 2000);
     },
-
-    // 改进的输入处理方法
+    // 输入处理方法
     inputFn(e) {
       if (this.isComposing) return; // 中文输入法输入过程中不处理
 
@@ -553,6 +558,7 @@ export default {
       input.removeEventListener('compositionstart', this.handleCompositionStart);
       input.removeEventListener('compositionend', this.handleCompositionEnd);
     }
+    if (this.muteStatusIntervalId) clearInterval(this.muteStatusIntervalId);
   },
 
   updated() {

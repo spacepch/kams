@@ -56,8 +56,8 @@ export default {
       }
     };
   },
-  send(store, payload) {
-    const { state, dispatch } = store;
+  send(context, payload) {
+    const { state, dispatch } = context;
     if (state.wsStatus !== 'connected') {
       Vue.prototype
         .$dialog({ title: '提示', content: 'SandBox webSocket已断开连接，是否重新连接？' })
@@ -74,16 +74,5 @@ export default {
   },
   close({ state }) {
     state.wsInstance.close();
-  },
-
-  // 禁言检测
-  checkMute({ state, dispatch }) {
-    if (state.wsStatus !== 'connected') {
-      dispatch('initWebSocket');
-    }
-
-    dispatch('send', {
-      type: 'checkMute'
-    });
   }
 };

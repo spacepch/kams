@@ -40,5 +40,20 @@ export default {
   // 获取当前消息列表
   getCurrentMsg: (state) => {
     return state.currentMsg;
+  },
+  // 获取禁言状态
+  getMemberMuteStatue: (state) => (gid, mid) => {
+    const groupList = state.groupMsg[gid];
+    if (!groupList) return false;
+    const targetMember_mute = groupList.muteMembers.find((member) => member.id === mid);
+    if (!targetMember_mute) return false;
+    const timestamp_now = Date.now();
+    const timestamp_expire = targetMember_mute.expire_time || 0;
+
+    if (timestamp_now > timestamp_expire) {
+      return false;
+    } else {
+      return true;
+    }
   }
 };
