@@ -301,6 +301,7 @@ export default {
       this.isShowMain = !this.isShowMain;
     },
     updateCurrentFn() {
+      if (!this.getCurrent) return;
       const d = {
         access: this.getCurrent.data.access,
         scope: this.getCurrent.data.scope,

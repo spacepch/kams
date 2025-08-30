@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import kAside from './aside.vue';
 import kFooter from './footer.vue';
 import kHeader from './header.vue';
@@ -31,6 +31,7 @@ export default {
     return {};
   },
   methods: {
+    ...mapActions('modulesDetail', { getModules: 'getData' }),
     handleAside() {
       if (uniqueRoutes.includes(this.$route.fullPath) || this.isSmall) {
         this.$store.commit('layoutOption/updateIsFoldAside', true);
@@ -68,7 +69,7 @@ export default {
   mounted() {},
   created() {
     this.$store.dispatch('command/getCommands');
-    this.$store.dispatch('modulesDetail/getData');
+    this.getModules();
     this.isVersionLatest()
       .then(() => {
         this.handleAside();
