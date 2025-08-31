@@ -48,7 +48,7 @@
 
       <template #inner>
         <k-menu
-          :default-active="getCurrent.name"
+          :default-active="getCurrent?.name"
           active-color="#752bec"
           :active-shape="['background']"
           text-color="#061e26"
@@ -78,10 +78,10 @@
               <i class="el-icon-back"></i>
               <span>&nbsp;列表</span>
             </span>
-            指令：{{ getCurrent.name }}
+            指令：{{ getCurrent?.name }}
           </div>
           <div class="form-wrapper">
-            <div class="">
+            <div v-if="true">
               <div class="config-item cmd-access" :inert="false">
                 <div class="config-label">权限等级</div>
                 <el-radio v-model="config.access" :label="0">成员</el-radio>
@@ -158,14 +158,13 @@
                   </pps-button>
                 </div>
               </div>
-            </div>
-            <!-- 提交修改 -->
-            <pps-form class="cmd-config-submit">
-              <pps-form @submit="submitConfigFn" @reset="updateCurrentFn">
+              <!-- 提交修改 -->
+              <pps-form @submit="submitConfigFn" @reset="updateCurrentFn" class="cmd-config-submit">
                 <pps-button theme="confirm">提交</pps-button>
                 <pps-button type="reset">重置</pps-button>
               </pps-form>
-            </pps-form>
+            </div>
+            <el-empty v-else description="暂无指令" style=""></el-empty>
           </div>
         </div>
       </div>
@@ -178,9 +177,8 @@ import kContainer from '@/components/layout/container';
 import kAside from '@/components/layout/aside';
 import kMenuItem from '@/components/menus/menu-item.vue';
 import kMenu from '@/components/menus/';
-import { mapGetters, mapMutations } from 'vuex';
+import { mapGetters, mapMutations, mapActions } from 'vuex';
 import { commandScopeMap, commandAccessMap } from '@/utils/zh-CN';
-import { updateCommandConfigAPI } from '@/api';
 export default {
   name: 'kCommand',
   components: { kContainer, kAside, kMenu, kMenuItem },
@@ -208,6 +206,7 @@ export default {
   },
   methods: {
     ...mapMutations('command', { updateCurrent: 'UPDATE_CURRENT' }),
+    ...mapActions('command', ['updateCommands']),
     selectCmdFn(menuItem) {
       // console.log(menuItem);
       this.updateCurrent(menuItem.name);
@@ -274,8 +273,7 @@ export default {
     },
     submitConfigFn() {
       this.isLoading = true;
-      updateCommandConfigAPI(this.getCurrent.name, this.config).then((res) => {
-        console.log(res);
+      this.updateCommands({ name: this.getCurrent.name, config: this.config }).then((res) => {
         this.isLoading = false;
       });
     },
@@ -325,6 +323,7 @@ export default {
   },
   watch: {
     getCurrent(val) {
+      if (!val.name) return;
       const d = {
         access: val.data.access,
         scope: val.data.scope,
@@ -338,7 +337,6 @@ export default {
   created() {},
   mounted() {
     this.menus = this.getCmds;
-    console.log(this.getCmds);
     this.updateCurrentFn();
   }
 };

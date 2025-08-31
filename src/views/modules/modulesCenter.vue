@@ -102,10 +102,6 @@ export default {
     ...mapGetters('modulesDetail', ['getData', 'getCurrent']),
     itemId() {
       return (this.pageIndex - 1) * this.itemNum;
-    },
-    currentDetails_() {
-      if (!this.getData || !this.currentDetails) return [];
-      return '';
     }
   },
   watch: {
@@ -116,7 +112,7 @@ export default {
       }
     },
     getData: {
-      immediate: false,
+      immediate: true,
       handler(newVal) {
         if (newVal && newVal.length) {
           this.detailsLen = newVal.length;

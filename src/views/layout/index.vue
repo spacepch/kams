@@ -32,6 +32,7 @@ export default {
   },
   methods: {
     ...mapActions('modulesDetail', { getModules: 'getData' }),
+    ...mapActions('command', ['getCommands']),
     handleAside() {
       if (uniqueRoutes.includes(this.$route.fullPath) || this.isSmall) {
         this.$store.commit('layoutOption/updateIsFoldAside', true);
@@ -68,7 +69,7 @@ export default {
   },
   mounted() {},
   created() {
-    this.$store.dispatch('command/getCommands');
+    this.getCommands();
     this.getModules();
     this.isVersionLatest()
       .then(() => {
