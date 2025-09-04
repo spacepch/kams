@@ -3,7 +3,8 @@
     <h3 class="modal-title">创建用户</h3>
     <div class="form-group">
       <label>昵称:</label>
-      <input type="text" placeholder="请输入昵称" />
+      <b-input type="text" placeholder="请输入昵称" v-model="value" />
+      <span>{{ value }}</span>
     </div>
     <div class="form-group">
       <label>账号:</label>
@@ -47,7 +48,15 @@
 </template>
 
 <script>
-export default {};
+import bInput from './bindInput.vue';
+export default {
+  components: { bInput },
+  data() {
+    return {
+      value: 'abc'
+    };
+  }
+};
 </script>
 
 <style>

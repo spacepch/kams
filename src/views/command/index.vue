@@ -97,7 +97,7 @@
               </div>
               <div class="config-item cmd-hide">
                 <div class="config-label">是否隐藏</div>
-                <el-switch v-model="config.hide"></el-switch>
+                <el-switch v-model="config.hide" active-color="#00aeed"></el-switch>
               </div>
               <!-- 快捷方式 -->
               <div class="config-item cmd-shortcut">
