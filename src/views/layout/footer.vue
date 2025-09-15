@@ -2,7 +2,7 @@
   <el-footer height="30px">
     <pps-context-menu :menus="menus" position="top">
       <div slot="content" class="version detail">
-        <div class="kotori">kotori v{{ status.core }}</div>
+        <div class="kotori">kams v{{ version }}</div>
       </div>
     </pps-context-menu>
     <pps-context-menu
@@ -32,11 +32,13 @@
 <script>
 import { getStatusAPI } from '@/api/index';
 import { mapGetters, mapMutations } from 'vuex';
+import { version } from '@/../package.json';
 export default {
   name: 'k-footer',
   data() {
     return {
-      status: ''
+      status: '',
+      version
     };
   },
   methods: {
@@ -56,15 +58,17 @@ export default {
       ];
     }
   },
+  created() {
+    getStatusAPI().then(({ data: res }) => {
+      this.status = res;
+    });
+  },
   mounted() {
     this.$ws.bus.$on('wsMessage', (msg) => {
       if (msg.type === 'stats') {
-        // this.updateCpu(msg.data.cpu);
-        // this.updateRam(msg.data.ram);
+        this.updateCpu(msg.data.cpu);
+        this.updateRam(msg.data.ram);
       }
-    });
-    getStatusAPI().then(({ data: res }) => {
-      this.status = res;
     });
   },
   beforeDestroy() {

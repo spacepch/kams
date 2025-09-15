@@ -42,19 +42,53 @@
     <!-- 底部按钮 -->
     <div class="modal-footer">
       <button class="cancel-btn">取消</button>
-      <button class="confirm-btn">确认</button>
+      <button @click="testAsync()" class="confirm-btn">确认</button>
     </div>
   </div>
 </template>
 
 <script>
 import bInput from './bindInput.vue';
+import { getVersionAPI } from '../../api/index';
+
+const withAsyncCache = (fn) => {
+  const cache = new Map();
+
+  return function (...args) {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) {
+      return cache.get(key); // 返回缓存的值
+    }
+    try {
+      const result = fn(...args);
+      cache.set(key, result);
+      return result;
+    } catch (promise) {
+      promise.then((value) => {
+        cache.set(key, value); // 缓存异步结果
+        // 重新执行函数（实际实现更复杂）
+        withAsyncCache();
+      });
+      throw promise; // 继续向上传播异步
+    }
+  };
+};
+
 export default {
   components: { bInput },
   data() {
     return {
       value: 'abc'
     };
+  },
+  methods: {
+    testAsync() {
+      const getAPIWithCache = withAsyncCache(getVersionAPI);
+      console.log('开始请求');
+      this.main(getAPIWithCache);
+      console.log('结束请求');
+    },
+    main(fn) {}
   }
 };
 </script>
