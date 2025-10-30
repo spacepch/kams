@@ -16,7 +16,7 @@ export default {
       const final_protocol = store.state.layoutOption.protocol;
       const token = store.state.layoutOption.token;
       const url = `${
-        final_protocol === 'https://' ? 'wss:' : 'ws:'
+        final_protocol === 'https' ? 'wss:' : 'ws:'
       }//${final_host}:${final_port}/webui/${token}`;
       if (wsInstance) return console.warn('WebSocket已经开启，不能重复初始化。');
       wsInstance = new WebSocket(url);

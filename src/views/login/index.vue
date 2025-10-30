@@ -29,57 +29,59 @@
         <div :class="{ 'line-right': !whichTab }" class="bottom-line"></div>
       </div>
 
-      <div class="border" v-show="whichTab">
-        <pps-form @submit="loginFn()">
-          <pps-input
-            clearable
-            :content.sync="loginForm.username"
-            icon="pps-icon-admin"
-            placeholder="用户名"
-          ></pps-input>
-          <pps-input
-            clearable
-            viewPassword
-            :content.sync="loginForm.password"
-            icon="pps-icon-lock"
-            type="password"
-            placeholder="密码"
-          ></pps-input>
-          <div><a @click="showDialog('forget')" class="forget">忘记密码？</a></div>
-          <pps-button theme="confirm" class="login">登录</pps-button>
-        </pps-form>
-      </div>
+      <transition-group name="pps-e" mode="out-in" class="pps-e">
+        <div class="border" v-if="whichTab" key="login">
+          <pps-form @submit="loginFn()">
+            <pps-input
+              clearable
+              :content.sync="loginForm.username"
+              icon="pps-icon-admin"
+              placeholder="用户名"
+            ></pps-input>
+            <pps-input
+              clearable
+              viewPassword
+              :content.sync="loginForm.password"
+              icon="pps-icon-lock"
+              type="password"
+              placeholder="密码"
+            ></pps-input>
+            <div><a @click="showDialog('forget')" class="forget">忘记密码？</a></div>
+            <pps-button theme="confirm" class="login">登录</pps-button>
+          </pps-form>
+        </div>
 
-      <div class="border config" v-show="!whichTab">
-        <pps-form @submit="submitConfigFn()" @reset="resetConfigFn()">
-          <pps-input
-            clearable
-            :content.sync="configForm.host"
-            icon="pps-icon-host"
-            placeholder="无前缀后端IP地址"
-            style="position: relative"
-          >
-            <template v-slot:prepend>
-              <dp
-                @select="selectSslFn"
-                :current="http_or_https"
-                :menu="['https://', 'http://']"
-              ></dp>
-            </template>
-          </pps-input>
-          <pps-input
-            clearable
-            :content.sync="configForm.port"
-            icon="pps-icon-port"
-            placeholder="后端端口号"
-          ></pps-input>
-          <div><p>警告！若无需分离前后端请谨慎修改！</p></div>
-          <div class="submit">
-            <pps-button theme="confirm">提交</pps-button>
-            <pps-button theme="" type="reset">重置</pps-button>
-          </div>
-        </pps-form>
-      </div>
+        <div class="border config" v-else key="config">
+          <pps-form @submit="submitConfigFn()" @reset="resetConfigFn()">
+            <pps-input
+              clearable
+              :content.sync="configForm.host"
+              icon="pps-icon-host"
+              placeholder="无前缀后端IP地址"
+              style="position: relative"
+            >
+              <template v-slot:prepend>
+                <dp
+                  @select="selectSslFn"
+                  :current="configForm.protocol"
+                  :menu="['https', 'http']"
+                ></dp>
+              </template>
+            </pps-input>
+            <pps-input
+              clearable
+              :content.sync="configForm.port"
+              icon="pps-icon-port"
+              placeholder="后端端口号"
+            ></pps-input>
+            <div><p>警告！若无需分离前后端请谨慎修改！</p></div>
+            <div class="submit">
+              <pps-button theme="confirm">提交</pps-button>
+              <pps-button theme="" type="reset">重置</pps-button>
+            </div>
+          </pps-form>
+        </div>
+      </transition-group>
     </div>
 
     <div class="foot">
@@ -104,8 +106,10 @@
 import copyIcon from './copyIcon.vue';
 import { loginAPI } from '@/api';
 import { mapMutations, mapState } from 'vuex';
-import { configureAxiosInstance } from '@/utils/request';
+// import { configureAxiosInstance } from '@/utils/request';
 import dp from '@/components/dropdown';
+// eslint-disable-next-line no-unused-vars
+import { submitBackendConfig } from '@/utils/backendConfig';
 
 export default {
   name: 'myLogin',
@@ -117,13 +121,13 @@ export default {
       isShowDialog: false,
       loading: false,
       isShowSelect: false,
-      http_or_https: 'https:',
       dialogData: {},
       loginForm: {
         username: '',
         password: ''
       },
       configForm: {
+        protocol: 'https',
         host: '',
         port: ''
       }
@@ -143,42 +147,22 @@ export default {
     },
     selectSslFn(ssl) {
       // this.isShowSelect = false;
-      this.http_or_https = ssl;
-    },
-    updataBackendConfigFn() {
-      const ssl = this.http_or_https === 'https://';
-      const port = this.configForm.port || (ssl ? 443 : 80);
-      const host = this.configForm.host.replace(/^(https?:\/\/)/, '');
-      this.updateHost(host);
-      this.updatePort(port);
-      this.updateProtocol(this.http_or_https);
-      configureAxiosInstance(this.$store);
-      this.mountBackendConfigFn();
-      this.$message.success('修改成功！');
+      this.configForm.protocol = ssl;
     },
     submitConfigFn() {
-      const currSsl = window.location.protocol;
-      console.log(currSsl);
-      const isConsistent = currSsl === 'https:' && currSsl !== this.http_or_https;
-      if (isConsistent) {
-        return this.$dialog({
-          title: '提示',
-          content: '配置与当前页面协议不一致, 是否继续?'
-        })
-          .then(() => {
-            this.updataBackendConfigFn();
-          })
-          .catch((e) => {
-            console.log(e);
-          });
-      }
-      this.updataBackendConfigFn();
+      const configData = {
+        host: this.configForm.host,
+        port: this.configForm.port,
+        protocol: this.configForm.protocol,
+        username: this.loginForm.username,
+        password: this.loginForm.password
+      };
+      submitBackendConfig({ configData });
     },
     resetConfigFn() {
-      this.configForm = {
-        host: this.host,
-        port: this.port
-      };
+      this.configForm.host = this.host;
+      this.configForm.port = this.port;
+      this.configForm.protocol = this.protocol;
       this.$message.info('已重置！');
     },
     async loginFn() {
@@ -223,10 +207,6 @@ export default {
         };
       }
       this.isShowDialog = true;
-    },
-    mountBackendConfigFn() {
-      this.configForm.host = this.host;
-      this.configForm.port = this.port;
     }
   },
   computed: {
@@ -242,15 +222,41 @@ export default {
       return this.tabsFlag === 'login';
     }
   },
-  mounted() {
-    this.mountBackendConfigFn();
+  watch: {
+    host: {
+      handler(newVal, oldVal) {
+        this.configForm.host = newVal;
+      },
+      immediate: true
+    },
+    port: {
+      handler(newVal, oldVal) {
+        this.configForm.port = newVal;
+      },
+      immediate: true
+    },
+    protocol: {
+      handler(newVal, oldVal) {
+        this.configForm.protocol = newVal;
+      },
+      immediate: true
+    },
+    username: {
+      handler(newVal, oldVal) {
+        this.loginForm.username = newVal;
+      },
+      immediate: true
+    },
+    password: {
+      handler(newVal, oldVal) {
+        this.loginForm.password = newVal;
+      },
+      immediate: true
+    }
   },
+  mounted() {},
   created() {
-    this.loginForm.username = this.username;
-    this.loginForm.password = this.password;
-    this.configForm.host = this.host;
-    this.configForm.port = this.port;
-    this.http_or_https = this.protocol || 'https://';
+    this.configForm.protocol = this.protocol || 'https://';
   }
 };
 </script>
@@ -311,18 +317,20 @@ export default {
   display: flex;
   align-items: center;
   flex-direction: column;
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   background-image: url('../../assets/bg-login.png');
   background-size: 100% 100%;
 
   .login-container {
+    position: relative;
     flex: 1 1 0%;
   }
   .border {
     padding: 15px;
     margin-top: 10px;
     text-align: center;
+    position: absolute;
 
     .pps-button {
       margin: 20px auto 0;
@@ -427,18 +435,19 @@ export default {
   }
 }
 
-/* 进入的起点、离开的终点 */
-.hello-enter,
-.hello-leave-to {
-  transform: translateY(-10%);
+.pps-e-enter {
+  transform: translateX(20px);
 }
-.hello-enter-active,
-.hello-leave-active {
-  transition: 0.15s linear;
+// .pps-e-enter-to {
+//   transform: translateX(0px);
+// }
+
+.pps-e {
+  display: block;
+  width: 390px;
 }
-/* 进入的终点、离开的起点 */
-.hello-enter-to,
-.hello-leave {
-  transform: translateY(0);
+
+.pps-e-enter-active {
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

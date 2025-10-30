@@ -83,8 +83,8 @@
                   <template v-slot:prepend>
                     <dp
                       @select="selectSslFn"
-                      :current="http_or_https"
-                      :menu="['https://', 'http://']"
+                      :current="hostForm.protocol"
+                      :menu="['https', 'http']"
                     ></dp>
                   </template>
                 </pps-input>
@@ -127,9 +127,9 @@
 import { getGlobalConfigAPI, updateGlobalConfigAPI } from '@/api/index';
 import kContainer from '@/components/layout/container.vue';
 import { mapMutations, mapState } from 'vuex';
-import { configureAxiosInstance } from '@/utils/request';
 import kAside from '@/components/layout/aside.vue';
 import dp from '@/components/dropdown';
+import { submitBackendConfig } from '@/utils/backendConfig';
 
 export default {
   data() {
@@ -160,12 +160,10 @@ export default {
       hostForm: {
         host: '',
         port: '',
-        wsHost: '',
-        sandBoxPort: null
+        protocol: 'https'
       },
       isLoading: false,
       isShowSelect: false,
-      http_or_https: 'https:',
       listWidth: 0,
       isPadding: 1
     };
@@ -173,7 +171,6 @@ export default {
   components: { kContainer, kAside, dp },
 
   methods: {
-    ...mapMutations('layoutOption', ['updateHost', 'updatePort', 'updateSandBoxPort']),
     ...mapMutations('sandBox', ['SET_SANDBOX_WS_KEEPALIVE']),
     async getConfig() {
       const { data: res } = await getGlobalConfigAPI();
@@ -189,54 +186,22 @@ export default {
       this.getConfig();
       this.$message.info('已重置！');
     },
-    updataBackendConfigFn() {
-      const ssl = this.http_or_https === 'https://';
-      const port = this.hostForm.port || (ssl ? 443 : 80);
-      const host = this.hostForm.host;
-      console.log('new', this.http_or_https);
-      this.updateHost(host);
-      this.updatePort(port);
-      this.updateSandBoxPort(this.hostForm.sandBoxPort);
-      configureAxiosInstance(this.$store);
-      this.mountBackendConfigFn();
-      this.$message.success('修改成功！');
-    },
-    mountBackendConfigFn() {
-      this.hostForm.host = this.host.replace(/^(https?:\/\/)/, '');
-      this.hostForm.port = this.port;
-      this.hostForm.sandBoxPort = this.sandBoxPort;
-    },
     submitBackendFn() {
-      const currSsl = window.location.protocol;
-      const isConsistent = currSsl === 'https:' && currSsl !== this.http_or_https;
-      if (isConsistent) {
-        return this.$confirm('配置与当前页面协议不一致, 是否继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-          .then(() => {
-            this.updataBackendConfigFn();
-          })
-          .catch(() => {
-            this.$message({
-              type: 'info',
-              message: '已取消修改'
-            });
-          });
-      }
-      this.updataBackendConfigFn();
+      const configData = {
+        host: this.hostForm.host,
+        port: this.hostForm.port,
+        protocol: this.hostForm.protocol
+      };
+      submitBackendConfig({ configData });
     },
     resetBackendFn() {
-      this.configForm = {
-        host: this.host,
-        port: this.port,
-        sandBoxPort: this.sandBoxPort
-      };
+      this.hostForm.host = this.host;
+      this.hostForm.port = this.port;
+      this.hostForm.protocol = this.protocol;
       this.$message.info('已重置！');
     },
-    selectSslFn(ssl) {
-      this.http_or_https = ssl;
+    selectSslFn(protocol) {
+      this.hostForm.protocol = protocol;
     },
     cardResize(w, _) {
       if (Math.floor(w) <= 700) {
@@ -255,17 +220,34 @@ export default {
     }
   },
   computed: {
-    ...mapState('layoutOption', ['host', 'port', 'protocol', 'sandBoxPort']),
+    ...mapState('layoutOption', ['host', 'port', 'protocol']),
     ...mapState('sandBox', {
       store_keepSandboxWsAlive: 'isKeepSandboxWsAlive'
     })
   },
-  mounted() {
-    this.http_or_https = this.protocol || 'https://';
+  watch: {
+    host: {
+      handler(newVal, oldVal) {
+        this.hostForm.host = newVal;
+      },
+      immediate: true
+    },
+    port: {
+      handler(newVal, oldVal) {
+        this.hostForm.port = newVal;
+      },
+      immediate: true
+    },
+    protocol: {
+      handler(newVal, oldVal) {
+        this.hostForm.protocol = newVal;
+      },
+      immediate: true
+    }
   },
+  mounted() {},
   created() {
     this.getConfig();
-    this.mountBackendConfigFn();
     this.initSandboxWsAliveFn();
   }
 };

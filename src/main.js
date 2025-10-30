@@ -24,7 +24,7 @@ const i18n = new I18n();
 
 Vue.config.productionTip = false;
 
-configureAxiosInstance(store);
+configureAxiosInstance();
 
 Vue.use(webSocketPlugin);
 Vue.use(ppsUI.install);

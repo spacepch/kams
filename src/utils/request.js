@@ -1,17 +1,17 @@
 import { Message } from 'element-ui';
 import router from '@/router';
 import axios from 'axios';
-// import store from '@/store/index';
-// import config from '@/config';
+import store from '@/store/index';
 
 console.error('[request] 跳转登录页面待优化');
 let myAxios;
 
-export const configureAxiosInstance = (store) => {
+export const configureAxiosInstance = () => {
   const HOST = store.state.layoutOption.host ?? '';
   const PORT = store.state.layoutOption.port ?? '';
-  const protocol = store.state.layoutOption.protocol ?? 'http:';
-  const url = HOST && PORT ? `${protocol}//${HOST}:${PORT}/api` : '/api';
+  const protocol = store.state.layoutOption.protocol ?? 'http';
+  const url = HOST && PORT ? `${protocol}://${HOST}:${PORT}/api` : '/api';
+
   myAxios = axios.create({
     baseURL: url,
     timeout: 8000

@@ -4,7 +4,7 @@
     <el-container class="kams-main-container" direction="vertical">
       <k-header></k-header>
       <el-main :class="{ isPadding, lessPadding: getIsNarrowScreen }">
-        <transition mode="out-in">
+        <transition name="pps" mode="out-in">
           <keep-alive include="kConsole">
             <router-view></router-view>
           </keep-alive>
@@ -34,7 +34,7 @@ export default {
     ...mapActions('modulesDetail', { getModules: 'getData' }),
     ...mapActions('command', ['getCommands']),
     handleAside() {
-      if (uniqueRoutes.includes(this.$route.fullPath) || this.isSmall) {
+      if (uniqueRoutes.includes(this.$route.path) || this.isSmall) {
         this.$store.commit('layoutOption/updateIsFoldAside', true);
       } else {
         this.$store.commit('layoutOption/updateIsFoldAside', false);
@@ -94,13 +94,13 @@ export default {
   computed: {
     ...mapGetters('layoutOption', ['getIsFoldAside', 'getIsNarrowScreen']),
     isPadding() {
-      if (uniqueRoutes.includes(this.$route.fullPath)) {
+      if (uniqueRoutes.includes(this.$route.path)) {
         return true;
       }
       return false;
     },
     isFooter() {
-      if (uniqueRoutes[0].includes(this.$route.fullPath)) {
+      if (uniqueRoutes[0].includes(this.$route.path)) {
         return false;
       }
       return true;
@@ -153,17 +153,5 @@ export default {
       background: #888888; // 鼠标悬停时滚动条的颜色
     }
   }
-}
-.v-enter {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-.v-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-.v-enter-active,
-.v-leave-active {
-  transition: all 0.5s;
 }
 </style>

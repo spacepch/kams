@@ -48,7 +48,7 @@ export default {
       return this.$route.matched[1].meta.title;
     },
     isPadding() {
-      if (this.$route.fullPath === '/console') {
+      if (this.$route.path === '/console') {
         return true;
       }
       return false;

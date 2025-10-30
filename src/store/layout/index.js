@@ -32,7 +32,6 @@ export default {
     },
     updateProtocol(state, val = '') {
       state.protocol = val;
-      console.log('new protocol', val);
     },
     updateUsername(state, val = '') {
       state.username = val;

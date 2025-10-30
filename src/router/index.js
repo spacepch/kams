@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import store from '@/store';
+import { submitBackendConfig, extractConfigFromURL } from '@/utils/backendConfig';
 
 Vue.use(VueRouter);
 
@@ -92,18 +93,27 @@ const router = new VueRouter({
 
 const whiteList = ['/login', '/sandBox'];
 
+const handleQuery = (query, next) => {
+  if (Object.keys(query).length > 0) {
+    const configData = extractConfigFromURL(query);
+    submitBackendConfig({ configData, ucb: next });
+  }
+  next();
+};
+
 router.beforeEach((to, from, next) => {
   const token = store.state.layoutOption.token;
   if (token) {
-    if (token) {
-      //
-    }
+    // 已登录
     next();
   } else {
+    // 未登录
     if (whiteList.includes(to.path)) {
-      next();
+      handleQuery(to.query, next);
     } else {
-      next('/login');
+      handleQuery(to.query, () => {
+        next('/login');
+      });
     }
   }
 });

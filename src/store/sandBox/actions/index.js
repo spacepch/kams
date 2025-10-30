@@ -11,7 +11,7 @@ export default {
     const host = rootState.layoutOption.host;
     const port = rootState.layoutOption.port;
     const protocol = rootState.layoutOption.protocol;
-    const url = `${protocol === 'https://' ? 'wss' : 'ws'}://${host}:${port}/adapter/sandbox`;
+    const url = `${protocol === 'https' ? 'wss' : 'ws'}://${host}:${port}/adapter/sandbox`;
     const ws = new WebSocket(url);
 
     // 保存连接实例
